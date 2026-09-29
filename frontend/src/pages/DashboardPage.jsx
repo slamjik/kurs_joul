@@ -1,0 +1,276 @@
+import React from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Table, Tag, Button, Spin, Empty, Alert } from 'antd'
+import {
+  Users,
+  AlertTriangle,
+  Clock,
+  Award,
+  RefreshCw,
+  TrendingUp,
+  PieChart as PieIcon,
+  BarChart3,
+  BookOpen,
+} from 'lucide-react'
+import { KpiCard } from '../components/ui/KpiCard'
+import { QualityPieChart } from '../components/charts/QualityPieChart'
+import { WorkloadBarChart } from '../components/charts/WorkloadBarChart'
+import { GradesDynamicsLineChart } from '../components/charts/GradesDynamicsLineChart'
+import {
+  getKpiSummary,
+  getKpiQualityLevels,
+  getKpiWorkloadChart,
+  getKpiGradesDynamics,
+  getKpiDirectionsSummary,
+  invalidateKpiCache,
+} from '../api/kpi'
+import styles from './DashboardPage.module.css'
+
+export function DashboardPage() {
+  const {
+    data: summary,
+    isLoading: loadingSummary,
+    refetch: refetchSummary,
+  } = useQuery({
+    queryKey: ['kpi-summary'],
+    queryFn: getKpiSummary,
+  })
+
+  const {
+    data: qualityLevels,
+    isLoading: loadingQuality,
+    refetch: refetchQuality,
+  } = useQuery({
+    queryKey: ['kpi-quality-levels'],
+    queryFn: getKpiQualityLevels,
+  })
+
+  const {
+    data: workloadChart,
+    isLoading: loadingWorkload,
+    refetch: refetchWorkload,
+  } = useQuery({
+    queryKey: ['kpi-workload-chart'],
+    queryFn: getKpiWorkloadChart,
+  })
+
+  const {
+    data: gradesDynamics,
+    isLoading: loadingDynamics,
+    refetch: refetchDynamics,
+  } = useQuery({
+    queryKey: ['kpi-grades-dynamics'],
+    queryFn: getKpiGradesDynamics,
+  })
+
+  const {
+    data: directionsSummary,
+    isLoading: loadingDirections,
+    refetch: refetchDirections,
+  } = useQuery({
+    queryKey: ['kpi-directions-summary'],
+    queryFn: getKpiDirectionsSummary,
+  })
+
+  const handleRefreshAll = async () => {
+    try {
+      await invalidateKpiCache()
+      refetchSummary()
+      refetchQuality()
+      refetchWorkload()
+      refetchDynamics()
+      refetchDirections()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const directionColumns = [
+    {
+      title: 'Код',
+      dataIndex: 'direction_code',
+      width: 120,
+      render: (code) => <Tag color="blue">{code || '—'}</Tag>,
+    },
+    {
+      title: 'Направление подготовки',
+      dataIndex: 'direction_name',
+      render: (name) => <strong>{name}</strong>,
+    },
+    {
+      title: 'Групп',
+      dataIndex: 'groups_count',
+      align: 'center',
+      width: 90,
+    },
+    {
+      title: 'Студентов',
+      dataIndex: 'students_count',
+      align: 'center',
+      width: 110,
+    },
+    {
+      title: 'Средний балл',
+      dataIndex: 'avg_grade',
+      align: 'center',
+      width: 130,
+      render: (val) => {
+        const num = Number(val || 0)
+        const color = num < 3.0 ? 'red' : num >= 4.0 ? 'green' : 'gold'
+        return <Tag color={color}>{num.toFixed(2)}</Tag>
+      },
+    },
+    {
+      title: 'Часов нагрузки',
+      dataIndex: 'hours_total',
+      align: 'right',
+      width: 140,
+      render: (val) => `${val || 0} ч.`,
+    },
+  ]
+
+  return (
+    <div>
+      {/* Заголовок страницы */}
+      <div className={styles.pageHeader}>
+        <div className={styles.titleArea}>
+          <h1 className={styles.pageTitle}>Дашборд кафедры ГиСЭН</h1>
+          <span className="text-secondary">
+            Сводные аналитические показатели успеваемости, контингента и выполнения учебной нагрузки
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {summary?.cached_at && (
+            <span className={styles.cacheNotice}>
+              Срез данных: {new Date(summary.cached_at).toLocaleTimeString('ru-RU')}
+            </span>
+          )}
+          <Button
+            icon={<RefreshCw size={14} />}
+            onClick={handleRefreshAll}
+          >
+            Обновить данные
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className={styles.kpiGrid}>
+        <KpiCard
+          label="Всего студентов"
+          value={summary?.total_students}
+          subtitle={`Преподавателей кафедры: ${summary?.total_teachers || 3}`}
+          icon={Users}
+          variant="primary"
+        />
+
+        <KpiCard
+          label="В зоне риска (< 3.0)"
+          value={summary?.risk_students_count ?? summary?.risk_count ?? 0}
+          subtitle={
+            (summary?.risk_students_count ?? summary?.risk_count ?? 0) > 0
+              ? 'Требуется кураторский контроль'
+              : 'Отсутствуют задолженности'
+          }
+          icon={AlertTriangle}
+          variant={(summary?.risk_students_count ?? summary?.risk_count ?? 0) > 0 ? 'danger' : 'success'}
+        />
+
+        <KpiCard
+          label="Учебная нагрузка"
+          value={`${summary?.hours_plan_total ?? summary?.total_workload_hours ?? 0} ч.`}
+          subtitle={`Закрытие часов: ${summary?.hours_completion_pct ?? summary?.hours_completion ?? 0}%`}
+          icon={Clock}
+          variant="default"
+        />
+
+        <KpiCard
+          label="Средний балл кафедры"
+          value={summary?.avg_grade ? Number(summary.avg_grade).toFixed(2) : '—'}
+          subtitle={`Качественная успеваемость: ${summary?.quality_rate ?? summary?.avg_grade_pct ?? 0}%`}
+          icon={Award}
+          variant="success"
+        />
+      </div>
+
+      {/* Row 1: Quality Levels & Workload */}
+      <div className={styles.chartsGrid}>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <PieIcon size={16} color="var(--color-primary)" />
+              <span className={styles.cardTitle}>Уровни качества образования</span>
+            </div>
+            <span className="text-muted" style={{ fontSize: '12px' }}>Текущий семестр</span>
+          </div>
+          {loadingQuality ? (
+            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Spin />
+            </div>
+          ) : (
+            <QualityPieChart data={qualityLevels} />
+          )}
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <BarChart3 size={16} color="var(--color-primary)" />
+              <span className={styles.cardTitle}>Нагрузка по преподавателям</span>
+            </div>
+            <span className="text-muted" style={{ fontSize: '12px' }}>План / Факт (часы)</span>
+          </div>
+          {loadingWorkload ? (
+            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Spin />
+            </div>
+          ) : (
+            <WorkloadBarChart data={workloadChart} />
+          )}
+        </div>
+      </div>
+
+      {/* Row 2: Dynamics */}
+      <div className={styles.fullWidthSection}>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TrendingUp size={16} color="var(--color-primary)" />
+              <span className={styles.cardTitle}>Динамика среднего балла успеваемости</span>
+            </div>
+            <span className="text-muted" style={{ fontSize: '12px' }}>По семестрам и контрольным срезам</span>
+          </div>
+          {loadingDynamics ? (
+            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Spin />
+            </div>
+          ) : (
+            <GradesDynamicsLineChart data={gradesDynamics} />
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: Directions Summary Table */}
+      <div className={styles.fullWidthSection}>
+        <div className={styles.card} style={{ padding: '20px 20px 12px' }}>
+          <div className={styles.cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <BookOpen size={16} color="var(--color-primary)" />
+              <span className={styles.cardTitle}>Сводные данные по направлениям подготовки</span>
+            </div>
+          </div>
+          <Table
+            columns={directionColumns}
+            dataSource={directionsSummary || []}
+            rowKey={(r) => r.direction_code || r.direction_name}
+            loading={loadingDirections}
+            pagination={false}
+            size="middle"
+            bordered
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

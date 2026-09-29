@@ -1,0 +1,107 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 110px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.iconWrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.valueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* Варианты карточек */
+.card.danger {
+  border-left: 4px solid var(--color-danger);
+}
+.card.danger .value {
+  color: var(--color-danger);
+}
+.card.danger .iconWrapper {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.card.success {
+  border-left: 4px solid var(--color-success);
+}
+.card.success .value {
+  color: var(--color-success);
+}
+.card.success .iconWrapper {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.card.primary {
+  border-left: 4px solid var(--color-primary);
+}
+.card.primary .value {
+  color: var(--color-primary);
+}
+.card.primary .iconWrapper {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.card.warning {
+  border-left: 4px solid var(--color-warning);
+}
+.card.warning .value {
+  color: var(--color-warning);
+}
+.card.warning .iconWrapper {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}

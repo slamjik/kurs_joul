@@ -1,0 +1,24 @@
+# ─── Core Django & REST Framework ───────────────────────────
+django==4.2.16
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+drf-spectacular==0.27.2
+
+# ─── Database & Caching ─────────────────────────────────────
+psycopg2-binary==2.9.9
+redis==5.0.1
+django-redis==5.4.0
+
+# ─── File Processing & Reports ──────────────────────────────
+openpyxl==3.1.2
+pandas==2.1.4
+weasyprint==62.3
+
+# ─── Testing & Factories ────────────────────────────────────
+pytest==8.1.1
+pytest-django==4.7.0
+factory-boy==3.3.0
+
+# ─── Production Server ──────────────────────────────────────
+gunicorn==21.2.0

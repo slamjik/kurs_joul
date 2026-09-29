@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ведомость учебной нагрузки — НФ НИТУ МИСИС</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 15mm 15mm 15mm 15mm;
+            @bottom-right {
+                content: "Страница " counter(page) " из " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            color: #1a202c;
+            margin: 0;
+            padding: 0;
+            font-size: 10pt;
+            line-height: 1.3;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #1a56db;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .header h3 {
+            margin: 0 0 4px 0;
+            font-size: 11pt;
+            text-transform: uppercase;
+            color: #4a5568;
+        }
+        .header h2 {
+            margin: 0 0 6px 0;
+            font-size: 13pt;
+            color: #1a56db;
+        }
+        .header h1 {
+            margin: 0 0 4px 0;
+            font-size: 14pt;
+            font-weight: bold;
+        }
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 9.5pt;
+            color: #4a5568;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th {
+            background-color: #1a56db;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: left;
+            padding: 6px 8px;
+            border: 1px solid #1a56db;
+            font-size: 9pt;
+        }
+        td {
+            padding: 5px 8px;
+            border: 1px solid #cbd5e0;
+            font-size: 9pt;
+        }
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #edf2f7 !important;
+        }
+        .signatures {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .sig-block {
+            width: 45%;
+            font-size: 9.5pt;
+        }
+        .sig-line {
+            border-bottom: 1px solid #000;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h3>Новотроицкий филиал НИТУ «МИСИС»</h3>
+        <h2>Кафедра гуманитарных и социально-экономических наук</h2>
+        <h1>ВЕДОМОСТЬ РАСПРЕДЕЛЕНИЯ УЧЕБНОЙ НАГРУЗКИ</h1>
+    </div>
+
+    <div class="meta-info">
+        <div><strong>Семестр:</strong> {{ semester|default:"Все семестры" }}</div>
+        <div><strong>Дата формирования:</strong> {{ generated_date }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">№</th>
+                <th style="width: 25%;">Преподаватель</th>
+                <th style="width: 25%;">Дисциплина</th>
+                <th style="width: 15%;">Группа</th>
+                <th style="width: 10%; text-align: center;">План (ч)</th>
+                <th style="width: 10%; text-align: center;">Факт (ч)</th>
+                <th style="width: 10%;">Аудитория</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td style="text-align: center;">{{ forloop.counter }}</td>
+                <td>{{ item.teacher.full_name }}</td>
+                <td>{{ item.discipline.name }}</td>
+                <td>{{ item.group.name }}</td>
+                <td style="text-align: center;">{{ item.hours_plan }}</td>
+                <td style="text-align: center;">{{ item.hours_fact }}</td>
+                <td>{{ item.room|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 15px;">Записи учебной нагрузки не найдены.</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="4" style="text-align: right;"><strong>ИТОГО ПО КАФЕДРЕ:</strong></td>
+                <td style="text-align: center;"><strong>{{ total_plan }}</strong></td>
+                <td style="text-align: center;"><strong>{{ total_fact }}</strong></td>
+                <td>—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="signatures">
+        <div class="sig-block">
+            Заведующий кафедрой ГиСЭН:
+            <div class="sig-line"></div>
+            (подпись / ФИО)
+        </div>
+        <div class="sig-block" style="text-align: right;">
+            Ответственный за учебную работу:
+            <div class="sig-line"></div>
+            (подпись / ФИО)
+        </div>
+    </div>
+</body>
+</html>
