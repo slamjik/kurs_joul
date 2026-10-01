@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "reports.apps.ReportsConfig",
     "imports.apps.ImportsConfig",
     "audit.apps.AuditConfig",
+    "surveys.apps.SurveysConfig",
 ]
 
 # Кастомная модель пользователя с ролевой моделью (head, teacher, admin)
@@ -193,6 +194,10 @@ SPECTACULAR_SETTINGS = {
         "deepLinking": True,
         "persistAuthorization": True,
         "displayOperationId": True,
+    },
+    "ENUM_NAME_OVERRIDES": {
+        "GradeSourceEnum": "grades.models.Grade.SOURCE_CHOICES",
+        "RecommendationSourceEnum": "surveys.models.TeacherRecommendation.SOURCE_CHOICES",
     },
 }
 

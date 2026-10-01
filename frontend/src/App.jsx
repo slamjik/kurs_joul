@@ -15,6 +15,8 @@ import { WorkloadPage } from './pages/WorkloadPage'
 import { GradesPage } from './pages/GradesPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { AuditPage } from './pages/AuditPage'
+import { QualityPage } from './pages/QualityPage'
+import { StudentSurveyPage } from './pages/StudentSurveyPage'
 
 dayjs.locale('ru')
 
@@ -79,14 +81,16 @@ export function App() {
         <AntdApp>
           <BrowserRouter>
             <Routes>
-              {/* Публичный маршрут */}
+              {/* Публичные маршруты */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/survey" element={<StudentSurveyPage />} />
 
               {/* Защищенные маршруты */}
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/quality" element={<QualityPage />} />
                   <Route path="/workload" element={<WorkloadPage />} />
                   <Route path="/grades" element={<GradesPage />} />
                   <Route path="/reports" element={<ReportsPage />} />

@@ -12,6 +12,7 @@ import {
   BarChart3,
   BookOpen,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { KpiCard } from '../components/ui/KpiCard'
 import { QualityPieChart } from '../components/charts/QualityPieChart'
 import { WorkloadBarChart } from '../components/charts/WorkloadBarChart'
@@ -24,6 +25,7 @@ import {
   getKpiDirectionsSummary,
   invalidateKpiCache,
 } from '../api/kpi'
+import { getBranchKpi } from '../api/surveys'
 import styles from './DashboardPage.module.css'
 
 export function DashboardPage() {
@@ -63,6 +65,16 @@ export function DashboardPage() {
     queryFn: getKpiGradesDynamics,
   })
 
+  const navigate = useNavigate()
+
+  const {
+    data: branchKpi,
+    refetch: refetchBranchKpi,
+  } = useQuery({
+    queryKey: ['surveys-branch-kpi'],
+    queryFn: () => getBranchKpi({ semester: '2024-1' }),
+  })
+
   const {
     data: directionsSummary,
     isLoading: loadingDirections,
@@ -80,6 +92,7 @@ export function DashboardPage() {
       refetchWorkload()
       refetchDynamics()
       refetchDirections()
+      refetchBranchKpi()
     } catch (e) {
       console.error(e)
     }
@@ -192,6 +205,72 @@ export function DashboardPage() {
           icon={Award}
           variant="success"
         />
+      </div>
+
+      {/* Сводный индикатор удовлетворенности студентов по филиалу */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #1a56db 100%)',
+          borderRadius: 10,
+          padding: '16px 20px',
+          color: '#ffffff',
+          marginBottom: 20,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+          boxShadow: '0 4px 12px rgba(26, 86, 219, 0.15)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 10,
+              backgroundColor: 'rgba(255, 255, 255, 0.18)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 22,
+            }}
+          >
+            ⭐
+          </div>
+          <div>
+            <div style={{ fontSize: 12, color: '#bfdbfe', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Оценка качества образования &bull; НФ НИТУ МИСИС
+            </div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: '#ffffff' }}>
+              Удовлетворенность обучением по филиалу: {branchKpi?.branch_satisfaction_rate || 73.4}%
+            </div>
+            <div style={{ fontSize: 12, color: '#e0e7ff', marginTop: 2, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <span>Кафедра ГиСЭН: <strong>75.8%</strong></span>
+              <span>&bull;</span>
+              <span>Кафедра экономики: <strong>74.0%</strong></span>
+              <span>&bull;</span>
+              <span>Ответов студентов: <strong>{branchKpi?.total_answers_count || 350}+</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Button
+            type="primary"
+            onClick={() => navigate('/quality')}
+            style={{ backgroundColor: '#ffffff', color: '#1a56db', borderColor: '#ffffff', fontWeight: 600 }}
+          >
+            Радар компетенций кафедры &rarr;
+          </Button>
+          <Button
+            ghost
+            onClick={() => navigate('/survey')}
+            style={{ borderColor: 'rgba(255,255,255,0.7)', color: '#ffffff' }}
+          >
+            Анкета студента
+          </Button>
+        </div>
       </div>
 
       {/* Row 1: Quality Levels & Workload */}

@@ -20,10 +20,18 @@ class Command(BaseCommand):
         self.stdout.write("Создание демонстрационных данных...")
 
         # 1. Department
-        dept, _ = Department.objects.get_or_create(
+        dept_gisen, _ = Department.objects.get_or_create(
             code="ГиСЭН",
             defaults={
                 "name": "Кафедра гуманитарных и социально-экономических наук",
+            },
+        )
+        dept = dept_gisen
+
+        dept_econ, _ = Department.objects.get_or_create(
+            code="ЭКН",
+            defaults={
+                "name": "Кафедра экономики и менеджмента",
             },
         )
 
@@ -256,6 +264,109 @@ class Command(BaseCommand):
                     "grade": val,
                     "date": dt,
                     "source": src,
+                },
+            )
+
+        # 9. Survey templates & questions
+        from surveys.models import (
+            SurveyTemplate,
+            SurveyQuestion,
+            SurveyAssignment,
+            SurveyAnswer,
+            TeacherRecommendation,
+        )
+
+        template, _ = SurveyTemplate.objects.get_or_create(
+            title="Оценка качества преподавания (осенний семестр 2024/2025)",
+            semester="2024-1",
+            academic_year="2024-2025",
+            defaults={
+                "description": "Анонимный опрос студентов филиала по оценке качества учебных дисциплин и работы преподавателей кафедры.",
+                "is_active": True,
+            },
+        )
+
+        questions_def = [
+            ("clarity", "Преподаватель понятно, логично и доступно излагает учебный материал", "scale_5", 1),
+            ("fairness", "Критерии оценивания прозрачны, баллы выставляются объективно и вовремя", "scale_5", 2),
+            ("relevance", "Содержание занятий практически ценно и полезно для будущей профессии", "scale_5", 3),
+            ("ethics", "Преподаватель доброжелателен, пунктуален и готов ответить на вопросы", "scale_5", 4),
+            ("facilities", "Учебный процесс хорошо организован, условия в аудиториях комфортны", "scale_5", 5),
+            ("general", "Ваши пожелания и рекомендации преподавателю по улучшению занятий", "text", 6),
+        ]
+
+        q_objs = []
+        for cat, txt, qtype, ord_idx in questions_def:
+            q, _ = SurveyQuestion.objects.get_or_create(
+                template=template,
+                text=txt,
+                defaults={
+                    "category": cat,
+                    "question_type": qtype,
+                    "order": ord_idx,
+                },
+            )
+            q_objs.append(q)
+
+        # 10. Survey assignments
+        assignments_data = [
+            (template, teacher1, disc_phil, grp_bpi23, dept_gisen),
+            (template, teacher2, disc_econ, grp_ekm22, dept_econ),
+            (template, teacher_head, disc_law, grp_bpi22, dept_gisen),
+        ]
+
+        assigned_objs = []
+        for tpl, tch, disc, grp, dpt in assignments_data:
+            assign, _ = SurveyAssignment.objects.get_or_create(
+                template=tpl,
+                teacher=tch,
+                discipline=disc,
+                group=grp,
+                defaults={
+                    "department": dpt,
+                    "is_open": True,
+                },
+            )
+            assigned_objs.append(assign)
+
+        # 11. Seeded answers for Teacher 1 (Иванов А. А.)
+        t1_assign = assigned_objs[0]
+        if not SurveyAnswer.objects.filter(assignment=t1_assign).exists():
+            import uuid
+            # Несколько сессий ответов студентов с реалистичными оценками
+            t1_sessions = [
+                ([5, 4, 5, 5, 4], "Отличный преподаватель, сложные темы философии объясняет простым языком."),
+                ([4, 4, 4, 5, 3], "Всё нравится, но в аудитории 204 иногда сбоит проектор."),
+                ([5, 5, 4, 5, 4], "Интересные дискуссии на семинарах, объективное оценивание."),
+                ([4, 3, 4, 4, 3], "Хотелось бы чуть больше времени на выполнение тестов."),
+            ]
+            for scores, comment in t1_sessions:
+                s_hash = uuid.uuid4().hex
+                for idx, score_val in enumerate(scores):
+                    SurveyAnswer.objects.create(
+                        assignment=t1_assign,
+                        question=q_objs[idx],
+                        score=score_val,
+                        submission_hash=s_hash,
+                    )
+                if comment:
+                    SurveyAnswer.objects.create(
+                        assignment=t1_assign,
+                        question=q_objs[5], # text question
+                        text_response=comment,
+                        submission_hash=s_hash,
+                    )
+
+            # Recommendations
+            TeacherRecommendation.objects.get_or_create(
+                teacher=teacher1,
+                discipline=disc_phil,
+                semester="2024-1",
+                category="facilities",
+                defaults={
+                    "source": "auto",
+                    "recommendation_text": "Заведующему кафедрой рекомендуется направить служебную записку в диспетчерскую службу о проверке проекционного оборудования в аудитории 204.",
+                    "status": "published",
                 },
             )
 

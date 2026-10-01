@@ -141,6 +141,16 @@ export function LoginPage() {
           </div>
         </div>
 
+        <Button
+          type="dashed"
+          block
+          icon={<GraduationCap size={16} />}
+          onClick={() => navigate('/survey')}
+          style={{ marginTop: 14, borderColor: '#86efac', color: '#15803d', fontWeight: 500 }}
+        >
+          Пройти опрос качества как студент &rarr;
+        </Button>
+
         <div className={styles.footer}>
           &copy; 2026 НФ НИТУ МИСИС &bull; Все права защищены
         </div>

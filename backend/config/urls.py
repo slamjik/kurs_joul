@@ -50,6 +50,7 @@ urlpatterns = [
     path("api/kpi/", include("kpi.urls")),
     path("api/reports/", include("reports.urls")),
     path("api/audit/", include("audit.urls")),
+    path("api/surveys/", include("surveys.urls")),
 
     # Прямые эндпоинты справочников
     path("api/", include(top_level_router.urls)),

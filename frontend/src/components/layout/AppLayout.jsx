@@ -3,13 +3,14 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   CalendarCheck,
+  GraduationCap as AcademicIcon,
   GraduationCap,
   FileSpreadsheet,
   ShieldAlert,
   LogOut,
-  User,
-  GraduationCap as AcademicIcon,
   RefreshCw,
+  Award,
+  ExternalLink,
 } from 'lucide-react'
 import { Button, Tag, Tooltip, message, Popconfirm } from 'antd'
 import { useAuthStore } from '../../store/authStore'
@@ -48,6 +49,7 @@ export function AppLayout() {
 
   const navItems = [
     { to: '/dashboard', label: 'Дашборд кафедры', icon: LayoutDashboard },
+    { to: '/quality', label: 'Качество и опросы', icon: Award },
     { to: '/workload', label: 'Учебная нагрузка', icon: CalendarCheck },
     { to: '/grades', label: 'Успеваемость', icon: GraduationCap },
     { to: '/reports', label: 'Отчёты и экспорт', icon: FileSpreadsheet },
@@ -109,6 +111,15 @@ export function AppLayout() {
           </div>
 
           <div className={styles.headerRight}>
+            <Button
+              size="small"
+              icon={<ExternalLink size={14} />}
+              onClick={() => navigate('/survey')}
+              style={{ color: '#15803d', borderColor: '#86efac' }}
+            >
+              Анкета студента
+            </Button>
+
             {isHeadOrAdmin && (
               <Tooltip title="Сбросить кэш показателей (Redis)">
                 <Button
