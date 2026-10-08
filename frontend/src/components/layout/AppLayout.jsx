@@ -11,6 +11,8 @@ import {
   RefreshCw,
   Award,
   ExternalLink,
+  Menu,
+  X,
 } from 'lucide-react'
 import { Button, Tag, Tooltip, message, Popconfirm } from 'antd'
 import { useAuthStore } from '../../store/authStore'
@@ -26,6 +28,7 @@ const ROLE_CONFIG = {
 export function AppLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
   const handleLogout = () => {
     logout()
@@ -65,12 +68,23 @@ export function AppLayout() {
 
   return (
     <div className={styles.layout}>
-      {/* Левый сайдбар */}
-      <aside className={styles.sidebar}>
+      {/* Мобильный затемняющий оверлей */}
+      {mobileMenuOpen && (
+        <div
+          className={styles.backdrop}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Сайдбар (на десктопе фиксированный, на мобильном - выезжающий) */}
+      <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarTop}>
           <div
             className={styles.logoContainer}
-            onClick={() => navigate('/')}
+            onClick={() => {
+              navigate('/')
+              setMobileMenuOpen(false)
+            }}
             style={{ cursor: 'pointer' }}
             title="Перейти на главную страницу"
           >
@@ -89,6 +103,7 @@ export function AppLayout() {
                   key={item.to}
                   to={item.to}
                   end={item.end}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
                     `${styles.navItem} ${isActive ? styles.active : ''}`
                   }
@@ -110,17 +125,28 @@ export function AppLayout() {
       {/* Основная рабочая область */}
       <div className={styles.mainWrapper}>
         <header className={styles.header}>
-          <div
-            className={styles.headerLeft}
-            onClick={() => navigate('/dashboard')}
-            style={{ cursor: 'pointer' }}
-            title="Перейти на главную страницу дашборда"
-          >
-            <span className={styles.systemBadge}>ИС «КафИС»</span>
-            <span className="text-secondary" style={{ fontSize: '13px' }}>
-              Планирование и оперативный мониторинг
-            </span>
+          <div className={styles.headerLeft}>
+            {/* Кнопка-гамбургер для мобильных экранов */}
+            <button
+              className={styles.burgerBtn}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Открыть меню навигации"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+
+            <div
+              onClick={() => navigate('/')}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+              title="Перейти на главную страницу"
+            >
+              <span className={styles.systemBadge}>ИС «КафИС»</span>
+              <span className="text-secondary" style={{ fontSize: '13px' }}>
+                Планирование и оперативный мониторинг
+              </span>
+            </div>
           </div>
+
 
           <div className={styles.headerRight}>
             <Button

@@ -148,3 +148,101 @@
   padding: 24px 32px;
   background: var(--color-bg);
 }
+
+.burgerBtn {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s;
+}
+
+.burgerBtn:hover {
+  background-color: var(--color-bg);
+}
+
+.backdrop {
+  display: none;
+}
+
+/* ─── Мобильная адаптация (≤ 768px) ────────────────────────── */
+@media (max-width: 768px) {
+  .burgerBtn {
+    display: inline-flex;
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: -290px;
+    width: 270px;
+    z-index: 999;
+    box-shadow: none;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebarOpen {
+    transform: translateX(290px);
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .header {
+    padding: 0 14px;
+    height: 54px;
+  }
+
+  .headerLeft {
+    gap: 8px;
+  }
+
+  .headerLeft span.text-secondary {
+    display: none;
+  }
+
+  .systemBadge {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  .headerRight {
+    gap: 8px;
+  }
+
+  .userInfo {
+    gap: 6px;
+  }
+
+  .userName {
+    display: none;
+  }
+
+  .content {
+    padding: 16px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 10px;
+  }
+
+  .content {
+    padding: 12px 8px;
+  }
+}
+

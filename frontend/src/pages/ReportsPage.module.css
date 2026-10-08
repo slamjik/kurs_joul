@@ -77,3 +77,19 @@
   border-top: 1px solid var(--color-border);
   padding-top: 18px;
 }
+
+/* ─── Мобильная адаптация ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .reportsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .reportActions {
+    flex-direction: column;
+  }
+
+  .filtersBar {
+    padding: 12px;
+  }
+}
+
