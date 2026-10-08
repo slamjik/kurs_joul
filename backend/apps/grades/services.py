@@ -10,6 +10,7 @@
 from typing import Any, Dict, List, Optional
 from django.conf import settings
 from django.db.models import Avg, Count, Q
+from django.db.models.functions import TruncMonth
 
 from .models import Grade, Student
 
@@ -103,10 +104,17 @@ def get_grades_dynamics(
     group_id: Optional[int] = None,
     discipline_id: Optional[int] = None,
     teacher_id: Optional[int] = None,
+    period: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Формирует динамику среднего балла и успеваемости по семестрам.
+    Формирует динамику среднего балла и успеваемости по семестрам или контрольным точкам.
     Используется для построения линейного графика успеваемости.
+    Поддерживает периоды:
+    - all: за всё время (по семестрам)
+    - year_2024_2025: 2024-2025 учебный год
+    - year_2023_2024: 2023-2024 учебный год
+    - monthly: помесячные контрольные срезы
+    - last_year: последние 2 семестра
     """
     qs = Grade.objects.all()
 
@@ -116,6 +124,41 @@ def get_grades_dynamics(
         qs = qs.filter(discipline_id=discipline_id)
     if teacher_id:
         qs = qs.filter(teacher_id=teacher_id)
+
+    # 1. Помесячный режим (контрольные срезы успеваемости)
+    if period == "monthly":
+        monthly_stats = (
+            qs.filter(date__isnull=False)
+            .annotate(month=TruncMonth("date"))
+            .values("month")
+            .annotate(
+                avg_grade=Avg("grade"),
+                total_grades=Count("id"),
+                passing_grades=Count("id", filter=Q(grade__gte=PASSING_GRADE)),
+            )
+            .order_by("month")
+        )
+        result = []
+        for stat in monthly_stats:
+            m_dt = stat["month"]
+            label = m_dt.strftime("%m.%Y") if m_dt else "Срез"
+            total = stat["total_grades"] or 0
+            passing = stat["passing_grades"] or 0
+            pass_rate = round((passing / total * 100), 1) if total > 0 else 0.0
+            result.append({
+                "period": label,
+                "semester": label,
+                "avg_grade": round(float(stat["avg_grade"] or 0.0), 2),
+                "total_grades": total,
+                "pass_rate": pass_rate,
+            })
+        return result
+
+    # 2. Фильтрация по учебным периодам / годам
+    if period == "year_2024_2025":
+        qs = qs.filter(semester__in=["2024-1", "2024-2"])
+    elif period == "year_2023_2024":
+        qs = qs.filter(semester__in=["2023-1", "2023-2"])
 
     # Группировка по семестрам
     semester_stats = (
@@ -135,11 +178,15 @@ def get_grades_dynamics(
         pass_rate = round((passing / total * 100), 1) if total > 0 else 0.0
 
         result.append({
+            "period": stat["semester"],
             "semester": stat["semester"],
             "avg_grade": round(float(stat["avg_grade"] or 0.0), 2),
             "total_grades": total,
             "pass_rate": pass_rate,
         })
+
+    if period == "last_year" and len(result) > 2:
+        result = result[-2:]
 
     return result
 

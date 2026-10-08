@@ -15,6 +15,11 @@ export async function getDisciplines() {
   return response.data?.results || response.data || []
 }
 
+export async function getDisciplineCard(id) {
+  const response = await client.get(`/disciplines/${id}/card/`)
+  return response.data
+}
+
 export async function getStudents(params = {}) {
   const response = await client.get('/students/', { params })
   return response.data?.results || response.data || []
@@ -24,3 +29,4 @@ export async function getAuditLogs(params = {}) {
   const response = await client.get('/audit/', { params })
   return response.data
 }
+

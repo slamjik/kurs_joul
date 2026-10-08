@@ -89,9 +89,29 @@ export function QualityPage() {
       key: 'teacher_name',
       render: (name, record) => (
         <div>
-          <div style={{ fontWeight: 600, color: '#0f172a' }}>{name}</div>
-          <div style={{ fontSize: 12, color: '#64748b' }}>
-            {record.position} &bull; <Tag color="blue">{record.department_code}</Tag>
+          <div
+            style={{ fontWeight: 600, color: '#1a56db', cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleOpenTeacherModal(record.teacher_id)
+            }}
+            title="Открыть радар компетенций и отзывы"
+          >
+            {name}
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+            {record.position} &bull;{' '}
+            <Tag
+              color="blue"
+              style={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedDeptId(record.department_id)
+              }}
+              title="Фильтровать по этой кафедре"
+            >
+              {record.department_code}
+            </Tag>
           </div>
         </div>
       ),
@@ -292,7 +312,6 @@ export function QualityPage() {
         </div>
       </Card>
 
-      {/* Интерактивный блок выбора кафедр и таблица */}
       <Card style={{ borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <div
           style={{
@@ -309,7 +328,7 @@ export function QualityPage() {
               Рейтинг кафедр и преподавателей
             </Title>
             <Text type="secondary" style={{ fontSize: 13 }}>
-              Выберите кафедру для просмотра детализированного среза качества
+              Выберите кафедру для фильтрации или нажмите на преподавателя для просмотра компетенций
             </Text>
           </div>
 
@@ -337,6 +356,10 @@ export function QualityPage() {
           loading={loadingTeachers}
           pagination={{ pageSize: 8 }}
           locale={{ emptyText: 'Нет данных по преподавателям выбранной кафедры' }}
+          onRow={(record) => ({
+            onClick: () => handleOpenTeacherModal(record.teacher_id),
+            style: { cursor: 'pointer' },
+          })}
         />
       </Card>
 

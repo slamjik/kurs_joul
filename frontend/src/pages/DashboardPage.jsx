@@ -1,6 +1,6 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Table, Tag, Button, Spin, Empty, Alert } from 'antd'
+import { Table, Tag, Button, Spin, Empty, Alert, Select } from 'antd'
 import {
   Users,
   AlertTriangle,
@@ -11,6 +11,7 @@ import {
   PieChart as PieIcon,
   BarChart3,
   BookOpen,
+  Calendar,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { KpiCard } from '../components/ui/KpiCard'
@@ -56,13 +57,15 @@ export function DashboardPage() {
     queryFn: getKpiWorkloadChart,
   })
 
+  const [dynamicsPeriod, setDynamicsPeriod] = React.useState('all')
+
   const {
     data: gradesDynamics,
     isLoading: loadingDynamics,
     refetch: refetchDynamics,
   } = useQuery({
-    queryKey: ['kpi-grades-dynamics'],
-    queryFn: getKpiGradesDynamics,
+    queryKey: ['kpi-grades-dynamics', dynamicsPeriod],
+    queryFn: () => getKpiGradesDynamics({ period: dynamicsPeriod }),
   })
 
   const navigate = useNavigate()
@@ -147,7 +150,7 @@ export function DashboardPage() {
       {/* Заголовок страницы */}
       <div className={styles.pageHeader}>
         <div className={styles.titleArea}>
-          <h1 className={styles.pageTitle}>Дашборд кафедры ГиСЭН</h1>
+          <h1 className={styles.pageTitle}>Главная • Обзор кафедры ГиСЭН</h1>
           <span className="text-secondary">
             Сводные аналитические показатели успеваемости, контингента и выполнения учебной нагрузки
           </span>
@@ -313,12 +316,29 @@ export function DashboardPage() {
       {/* Row 2: Dynamics */}
       <div className={styles.fullWidthSection}>
         <div className={styles.card}>
-          <div className={styles.cardHeader}>
+          <div className={styles.cardHeader} style={{ flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <TrendingUp size={16} color="var(--color-primary)" />
               <span className={styles.cardTitle}>Динамика среднего балла успеваемости</span>
             </div>
-            <span className="text-muted" style={{ fontSize: '12px' }}>По семестрам и контрольным срезам</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="text-muted" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Calendar size={13} /> Период измерения:
+              </span>
+              <Select
+                value={dynamicsPeriod}
+                onChange={setDynamicsPeriod}
+                size="small"
+                style={{ width: 230 }}
+                options={[
+                  { value: 'all', label: 'За всё время (по семестрам)' },
+                  { value: 'year_2024_2025', label: '2024–2025 учебный год' },
+                  { value: 'year_2023_2024', label: '2023–2024 учебный год' },
+                  { value: 'last_year', label: 'Последние 2 семестра' },
+                  { value: 'monthly', label: 'Контрольные срезы (по месяцам)' },
+                ]}
+              />
+            </div>
           </div>
           {loadingDynamics ? (
             <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -329,6 +349,7 @@ export function DashboardPage() {
           )}
         </div>
       </div>
+
 
       {/* Row 3: Directions Summary Table */}
       <div className={styles.fullWidthSection}>

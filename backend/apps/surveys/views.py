@@ -27,6 +27,7 @@ from .serializers import (
 )
 from .services import (
     calculate_branch_kpi,
+    get_cascading_survey_options,
     get_department_teachers_quality,
     get_teacher_radar_analytics,
     submit_survey_response,
@@ -69,12 +70,28 @@ class SurveyAssignmentViewSet(viewsets.ReadOnlyModelViewSet):
 
         return qs
 
+    @extend_schema(summary="Каскадная структура для выбора: Группа -> Дисциплина -> Преподаватель")
+    @action(detail=False, methods=["get"], url_path="cascading-options")
+    def cascading_options(self, request):
+        data = get_cascading_survey_options()
+        return Response(data, status=status.HTTP_200_OK)
+
+
+def _safe_int(val):
+    if val is None or val == "":
+        return None
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return None
+
 
 @extend_schema(tags=["Опросы: Прохождение"])
 class SurveySubmitView(APIView):
     """Прием анонимного пакета ответов студента на анкету."""
 
     permission_classes = [AllowAny]
+    throttle_scope = "survey"
 
     @extend_schema(
         summary="Отправить анонимные ответы на анкету",
@@ -138,10 +155,10 @@ class QualityAnalyticsViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["get"], url_path="department-teachers")
     def department_teachers(self, request):
-        dept_id = request.query_params.get("department")
+        dept_id = _safe_int(request.query_params.get("department"))
         semester = request.query_params.get("semester", "2024-1")
         data = get_department_teachers_quality(
-            department_id=int(dept_id) if dept_id else None,
+            department_id=dept_id,
             semester=semester,
         )
         return Response(data)
@@ -169,12 +186,12 @@ class QualityAnalyticsViewSet(viewsets.ViewSet):
                 )
             target_teacher_id = teacher.id
         else:
-            if not teacher_id:
-                # По умолчанию берем первого преподавателя кафедры
+            parsed_id = _safe_int(teacher_id)
+            if parsed_id:
+                target_teacher_id = parsed_id
+            else:
                 first_t = Teacher.objects.first()
                 target_teacher_id = first_t.id if first_t else 1
-            else:
-                target_teacher_id = int(teacher_id)
 
         semester = request.query_params.get("semester", "2024-1")
         try:

@@ -33,9 +33,13 @@ class MoodleLMSClient(LMSClient):
             **params,
         }
         url = f"{self.endpoint}?{urllib.parse.urlencode(query_params)}"
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme.lower() not in ("http", "https"):
+            raise ValueError(f"Недопустимый протокол подключения к Moodle: {parsed.scheme}")
+
         req = urllib.request.Request(url, headers={"User-Agent": "KafIS-Backend/1.0"})
 
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:  # nosec B310
             data = json.loads(response.read().decode("utf-8"))
 
         if isinstance(data, dict) and "exception" in data:

@@ -46,14 +46,15 @@ export function AppLayout() {
   const role = user?.role || 'teacher'
   const roleInfo = ROLE_CONFIG[role] || { label: 'Сотрудник', color: 'default' }
   const isHeadOrAdmin = role === 'head' || role === 'admin'
+  const isAdmin = role === 'admin'
 
   const navItems = [
-    { to: '/dashboard', label: 'Дашборд кафедры', icon: LayoutDashboard },
+    { to: '/', label: 'Главная', icon: LayoutDashboard, end: true },
     { to: '/quality', label: 'Качество и опросы', icon: Award },
     { to: '/workload', label: 'Учебная нагрузка', icon: CalendarCheck },
     { to: '/grades', label: 'Успеваемость', icon: GraduationCap },
     { to: '/reports', label: 'Отчёты и экспорт', icon: FileSpreadsheet },
-    ...(isHeadOrAdmin
+    ...(isAdmin
       ? [{ to: '/audit', label: 'Журнал аудита', icon: ShieldAlert }]
       : []),
   ]
@@ -67,7 +68,12 @@ export function AppLayout() {
       {/* Левый сайдбар */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTop}>
-          <div className={styles.logoContainer}>
+          <div
+            className={styles.logoContainer}
+            onClick={() => navigate('/')}
+            style={{ cursor: 'pointer' }}
+            title="Перейти на главную страницу"
+          >
             <div className={styles.logoTitle}>
               <AcademicIcon size={22} color="var(--color-primary)" />
               <span>КафИС</span>
@@ -82,6 +88,7 @@ export function AppLayout() {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.end}
                   className={({ isActive }) =>
                     `${styles.navItem} ${isActive ? styles.active : ''}`
                   }
@@ -103,7 +110,12 @@ export function AppLayout() {
       {/* Основная рабочая область */}
       <div className={styles.mainWrapper}>
         <header className={styles.header}>
-          <div className={styles.headerLeft}>
+          <div
+            className={styles.headerLeft}
+            onClick={() => navigate('/dashboard')}
+            style={{ cursor: 'pointer' }}
+            title="Перейти на главную страницу дашборда"
+          >
             <span className={styles.systemBadge}>ИС «КафИС»</span>
             <span className="text-secondary" style={{ fontSize: '13px' }}>
               Планирование и оперативный мониторинг

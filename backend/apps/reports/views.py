@@ -36,7 +36,7 @@ class WorkloadExcelExportView(APIView):
         },
     )
     def get(self, request):
-        return export_workload_excel(request.query_params)
+        return export_workload_excel(request.query_params, user=request.user)
 
 
 class GradesExcelExportView(APIView):
@@ -61,7 +61,7 @@ class GradesExcelExportView(APIView):
         },
     )
     def get(self, request):
-        return export_grades_excel(request.query_params)
+        return export_grades_excel(request.query_params, user=request.user)
 
 
 class WorkloadPdfExportView(APIView):
@@ -84,7 +84,7 @@ class WorkloadPdfExportView(APIView):
         },
     )
     def get(self, request):
-        return export_workload_pdf(request.query_params)
+        return export_workload_pdf(request.query_params, user=request.user)
 
 
 class GradesPdfExportView(APIView):
@@ -109,5 +109,5 @@ class GradesPdfExportView(APIView):
         },
     )
     def get(self, request):
-        return export_grades_pdf(request.query_params)
+        return export_grades_pdf(request.query_params, user=request.user)
 

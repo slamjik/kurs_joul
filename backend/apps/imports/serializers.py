@@ -18,6 +18,17 @@ class FileUploadSerializer(serializers.Serializer):
         help_text="Семестр по умолчанию, если не указан внутри файла (например, 2024-1)",
     )
 
+    def validate_file(self, value):
+        ext = value.name.lower().split(".")[-1] if "." in value.name else ""
+        if ext != "xlsx":
+            raise serializers.ValidationError("Разрешена загрузка файлов только в формате Excel (.xlsx).")
+
+        max_size = 10 * 1024 * 1024  # 10 MB limit
+        if value.size > max_size:
+            raise serializers.ValidationError("Размер файла не должен превышать 10 МБ.")
+
+        return value
+
 
 class LMSImportRequestSerializer(serializers.Serializer):
     """Схема параметров для запуска синхронизации с LMS."""

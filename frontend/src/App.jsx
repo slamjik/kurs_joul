@@ -88,8 +88,8 @@ export function App() {
               {/* Защищенные маршруты */}
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/dashboard" element={<Navigate to="/" replace />} />
                   <Route path="/quality" element={<QualityPage />} />
                   <Route path="/workload" element={<WorkloadPage />} />
                   <Route path="/grades" element={<GradesPage />} />
@@ -103,7 +103,7 @@ export function App() {
               </Route>
 
               {/* Fallback */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </AntdApp>

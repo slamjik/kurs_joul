@@ -84,7 +84,15 @@ export function TeacherQualityModal({ visible, onClose, radarData, isLoading, on
           Закрыть
         </Button>,
       ]}
-      width={880}
+      width={900}
+      style={{ top: 20 }}
+      styles={{
+        body: {
+          maxHeight: 'calc(86vh - 120px)',
+          overflowY: 'auto',
+          paddingRight: 8,
+        },
+      }}
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Award size={22} color="#1a56db" />
@@ -92,7 +100,8 @@ export function TeacherQualityModal({ visible, onClose, radarData, isLoading, on
         </div>
       }
     >
-      {/* Header Info */}
+      <div style={{ maxHeight: 'calc(86vh - 130px)', overflowY: 'auto', paddingRight: 6 }}>
+        {/* Header Info */}
       <div
         style={{
           display: 'flex',
@@ -152,13 +161,6 @@ export function TeacherQualityModal({ visible, onClose, radarData, isLoading, on
             ),
             children: (
               <div>
-                <Alert
-                  type="info"
-                  showIcon
-                  message="Оценка по 5 ключевым образовательным критериям"
-                  description="Диаграмма формируется на основе анонимных анкет обучающихся по дисциплинам текущего семестра."
-                  style={{ marginBottom: 16 }}
-                />
                 <TeacherRadarChart radarData={radarData.radar} height={320} />
 
                 {/* Таблица показателей по категориям */}
@@ -188,6 +190,122 @@ export function TeacherQualityModal({ visible, onClose, radarData, isLoading, on
             ),
           },
           {
+            key: 'disciplines',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Building2 size={16} /> Дисциплины и группы ({radarData.disciplines?.length || 0})
+              </span>
+            ),
+            children: (
+              <div>
+                {(radarData.disciplines || []).length === 0 ? (
+                  <Card size="small" style={{ textAlign: 'center', color: '#64748b', padding: '24px 0' }}>
+                    Нет данных по дисциплинам за текущий семестр
+                  </Card>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {(radarData.disciplines || []).map((disc, idx) => (
+                      <Card
+                        key={idx}
+                        size="small"
+                        style={{
+                          borderRadius: 10,
+                          border: '1px solid #e2e8f0',
+                          backgroundColor: '#fafbfc',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 12,
+                            paddingBottom: 8,
+                            borderBottom: '1px solid #e2e8f0',
+                            flexWrap: 'wrap',
+                            gap: 8,
+                          }}
+                        >
+                          <div>
+                            <Text strong style={{ fontSize: 15, color: '#0f172a' }}>
+                              {disc.discipline_name}
+                            </Text>
+                            <span style={{ marginLeft: 8, fontSize: 12, color: '#64748b' }}>
+                              ({disc.groups?.length || 0} групп на потоке)
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 12, color: '#64748b' }}>Средний рейтинг предмета:</span>
+                            <Tag
+                              color={
+                                disc.average_satisfaction >= 80
+                                  ? 'success'
+                                  : disc.average_satisfaction >= 65
+                                  ? 'processing'
+                                  : 'warning'
+                              }
+                              style={{ fontWeight: 600, fontSize: 13, padding: '2px 8px' }}
+                            >
+                              {disc.average_satisfaction}%
+                            </Tag>
+                          </div>
+                        </div>
+
+                        {/* Таблица групп внутри дисциплины */}
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                            gap: 12,
+                          }}
+                        >
+                          {(disc.groups || []).map((grp, gIdx) => {
+                            const isAttention = grp.status === 'attention' || grp.satisfaction_rate < 50
+                            const isGood = grp.status === 'good' || (grp.satisfaction_rate >= 50 && grp.satisfaction_rate < 80)
+                            const isExcellent = grp.status === 'excellent' || grp.satisfaction_rate >= 80
+
+                            const borderColor = isAttention ? '#fca5a5' : isGood ? '#93c5fd' : '#86efac'
+                            const bgCard = isAttention ? '#fff1f2' : isGood ? '#f0f9ff' : '#f0fdf4'
+                            const textColor = isAttention ? '#b91c1c' : isGood ? '#1d4ed8' : '#15803d'
+
+                            return (
+                              <div
+                                key={gIdx}
+                                style={{
+                                  border: `1px solid ${borderColor}`,
+                                  backgroundColor: bgCard,
+                                  borderRadius: 8,
+                                  padding: '10px 14px',
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <strong style={{ fontSize: 14, color: '#0f172a' }}>{grp.group_name}</strong>
+                                  <span style={{ fontWeight: 700, fontSize: 15, color: textColor }}>
+                                    {grp.satisfaction_rate}%
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, fontSize: 12, color: '#64748b' }}>
+                                  <span>Анкет: {grp.responses_count}</span>
+                                  {isAttention ? (
+                                    <Tag color="error" style={{ fontSize: 10, margin: 0 }}>Внимание</Tag>
+                                  ) : isGood ? (
+                                    <Tag color="blue" style={{ fontSize: 10, margin: 0 }}>В норме</Tag>
+                                  ) : (
+                                    <Tag color="success" style={{ fontSize: 10, margin: 0 }}>Высокий</Tag>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
             key: 'comments',
             label: (
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -196,14 +314,6 @@ export function TeacherQualityModal({ visible, onClose, radarData, isLoading, on
             ),
             children: (
               <div>
-                <Alert
-                  type="success"
-                  showIcon
-                  message="Строгая анонимность отзывов"
-                  description="Все отзывы деперсонализированы в соответствии с протоколом защиты данных обучающихся. Идентификаторы студентов не сохраняются."
-                  style={{ marginBottom: 16 }}
-                />
-
                 <List
                   dataSource={radarData.comments || []}
                   locale={{ emptyText: 'Студенты пока не оставили текстовых отзывов к данной дисциплине' }}
@@ -341,6 +451,7 @@ export function TeacherQualityModal({ visible, onClose, radarData, isLoading, on
           },
         ]}
       />
+      </div>
     </Modal>
   )
 }

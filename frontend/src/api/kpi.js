@@ -15,10 +15,11 @@ export async function getKpiWorkloadChart() {
   return response.data
 }
 
-export async function getKpiGradesDynamics() {
-  const response = await client.get('/kpi/grades-dynamics/')
+export async function getKpiGradesDynamics(params = {}) {
+  const response = await client.get('/kpi/grades-dynamics/', { params })
   return response.data
 }
+
 
 export async function getKpiDirectionsSummary() {
   const response = await client.get('/kpi/directions-summary/')

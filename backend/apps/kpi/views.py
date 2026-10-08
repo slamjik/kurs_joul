@@ -98,13 +98,23 @@ class KpiGradesDynamicsView(APIView):
     @extend_schema(
         tags=["KPI-дашборд"],
         summary="Динамика успеваемости (линейный график)",
-        description="Возвращает динамику среднего балла и % положительных оценок по семестрам.",
+        description="Возвращает динамику среднего балла и % положительных оценок по семестрам или контрольным срезам.",
+        parameters=[
+            OpenApiParameter(
+                name="period",
+                type=str,
+                required=False,
+                description="Период среза: 'all' (все семестры), 'year_2024_2025', 'year_2023_2024', 'monthly' (контрольные точки по месяцам), 'last_year'",
+            ),
+        ],
         responses={status.HTTP_200_OK: GradesDynamicsSerializer(many=True)},
     )
     def get(self, request):
-        data = get_grades_dynamics()
+        period = request.query_params.get("period", "all")
+        data = get_grades_dynamics(period=period)
         serializer = GradesDynamicsSerializer(data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class KpiDirectionsSummaryView(APIView):

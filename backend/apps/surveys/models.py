@@ -59,7 +59,9 @@ class SurveyQuestion(models.Model):
     ]
 
     TYPE_CHOICES = [
-        ("scale_5", "Оценка по шкале (1–5 звезд)"),
+        ("scale_5", "Оценка по шкале (1–5 баллов)"),
+        ("single_choice", "Один вариант ответа"),
+        ("multiple_choice", "Несколько вариантов ответа"),
         ("text", "Текстовый отзыв в свободной форме"),
     ]
 
@@ -83,6 +85,12 @@ class SurveyQuestion(models.Model):
         choices=TYPE_CHOICES,
         default="scale_5",
         verbose_name="Тип вопроса",
+    )
+    options = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Варианты ответов",
+        help_text="Список вариантов для single_choice и multiple_choice",
     )
     order = models.PositiveIntegerField(
         default=1,

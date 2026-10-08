@@ -53,3 +53,8 @@ export async function getLMSStatus() {
   const response = await client.get('/grades/lms-status/')
   return response.data
 }
+
+export async function getStudentProfile(id) {
+  const response = await client.get(`/students/${id}/profile/`)
+  return response.data
+}

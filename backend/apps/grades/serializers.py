@@ -9,12 +9,27 @@ from .models import Grade, Student
 
 
 class StudentListSerializer(serializers.ModelSerializer):
-    """Облегчённый сериализатор для списков студентов."""
+    """Сериализатор для списков студентов и каталога контингента."""
 
     group_name = serializers.CharField(
         source="group.name",
         read_only=True,
     )
+    course = serializers.IntegerField(
+        source="group.course",
+        read_only=True,
+    )
+    direction_code = serializers.CharField(
+        source="group.direction_code",
+        read_only=True,
+    )
+    direction_name = serializers.CharField(
+        source="group.direction_name",
+        read_only=True,
+    )
+    average_grade = serializers.SerializerMethodField()
+    grades_count = serializers.SerializerMethodField()
+    is_risk = serializers.SerializerMethodField()
 
     class Meta:
         model = Student
@@ -24,7 +39,26 @@ class StudentListSerializer(serializers.ModelSerializer):
             "email",
             "group",
             "group_name",
+            "course",
+            "direction_code",
+            "direction_name",
+            "average_grade",
+            "grades_count",
+            "is_risk",
         ]
+
+    def get_average_grade(self, obj):
+        from django.db.models import Avg
+        avg_val = obj.grades.aggregate(avg=Avg("grade"))["avg"]
+        return round(float(avg_val), 2) if avg_val is not None else 0.0
+
+    def get_grades_count(self, obj):
+        return obj.grades.count()
+
+    def get_is_risk(self, obj):
+        avg = self.get_average_grade(obj)
+        has_failing = obj.grades.filter(grade__lt=3.0).exists()
+        return (avg > 0 and avg < 3.0) or has_failing
 
 
 class StudentDetailSerializer(serializers.ModelSerializer):
@@ -162,9 +196,11 @@ class RiskZoneStudentSerializer(serializers.Serializer):
 
 
 class GradesDynamicsSerializer(serializers.Serializer):
-    """Схема данных динамики успеваемости по семестрам."""
+    """Схема данных динамики успеваемости по семестрам или контрольным срезам."""
 
-    semester = serializers.CharField(help_text="Семестр, например '2024-1'")
-    avg_grade = serializers.FloatField(help_text="Средний балл по семестру")
+    period = serializers.CharField(required=False, default="", help_text="Метка периода (семестр или месяц)")
+    semester = serializers.CharField(required=False, default="", allow_blank=True, help_text="Семестр, например '2024-1'")
+    avg_grade = serializers.FloatField(help_text="Средний балл по семестру/периоду")
     total_grades = serializers.IntegerField(help_text="Количество выставленных оценок")
     pass_rate = serializers.FloatField(help_text="Процент положительных оценок (>= 3.0)")
+

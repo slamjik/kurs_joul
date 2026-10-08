@@ -13,7 +13,9 @@ django-redis==5.4.0
 # ─── File Processing & Reports ──────────────────────────────
 openpyxl==3.1.2
 pandas==2.1.4
+reportlab==5.0.1
 weasyprint==62.3
+
 
 # ─── Testing & Factories ────────────────────────────────────
 pytest==8.1.1

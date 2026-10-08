@@ -66,10 +66,13 @@ def import_workload_from_excel(file_obj) -> Dict[str, Any]:
     """
     Импортирует распределение учебной нагрузки из файла Excel.
     """
-    wb = openpyxl.load_workbook(file_obj, data_only=True)
-    ws = wb.active
+    try:
+        wb = openpyxl.load_workbook(file_obj, data_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+    except Exception as err:
+        return {"success": False, "created": 0, "errors": [f"Не удалось прочитать файл Excel (.xlsx): {str(err)}"]}
 
-    rows = list(ws.iter_rows(values_only=True))
     if not rows:
         return {"success": False, "created": 0, "errors": ["Файл пуст."]}
 
@@ -169,10 +172,13 @@ def import_grades_from_excel(file_obj, default_semester: Optional[str] = None) -
     """
     Импортирует оценки студентов из файла Excel.
     """
-    wb = openpyxl.load_workbook(file_obj, data_only=True)
-    ws = wb.active
+    try:
+        wb = openpyxl.load_workbook(file_obj, data_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+    except Exception as err:
+        return {"success": False, "created": 0, "errors": [f"Не удалось прочитать файл Excel (.xlsx): {str(err)}"]}
 
-    rows = list(ws.iter_rows(values_only=True))
     if not rows:
         return {"success": False, "created": 0, "errors": ["Файл пуст."]}
 

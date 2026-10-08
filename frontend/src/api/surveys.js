@@ -18,6 +18,16 @@ export async function getSurveyAssignments(params = {}) {
 }
 
 /**
+ * Получение каскадной структуры выбора для студенческой анкеты:
+ * Группа -> Дисциплина -> Преподаватель
+ */
+export async function getCascadingSurveyOptions() {
+  const response = await client.get('/surveys/assignments/cascading-options/')
+  return response.data
+}
+
+
+/**
  * Анонимная отправка результатов анкетирования студентом
  * @param {Object} data - { assignment_id, answers: [{ question_id, score, text_response }] }
  */

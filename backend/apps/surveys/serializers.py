@@ -25,6 +25,7 @@ class SurveyQuestionSerializer(serializers.ModelSerializer):
             "text",
             "question_type",
             "question_type_display",
+            "options",
             "order",
         ]
 

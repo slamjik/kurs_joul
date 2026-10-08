@@ -11,6 +11,17 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Загрузка переменных окружения из .env файла
+for env_candidate in [BASE_DIR.parent / ".env", BASE_DIR / ".env"]:
+    if env_candidate.exists():
+        with open(env_candidate, encoding="utf-8") as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith("#") and "=" in _line:
+                    _k, _v = _line.split("=", 1)
+                    os.environ.setdefault(_k.strip(), _v.strip())
+        break
+
 # Добавляем папку apps в путь поиска модулей, чтобы импортировать приложения напрямую
 sys.path.insert(0, str(BASE_DIR / "apps"))
 
@@ -170,6 +181,15 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/minute",
+        "user": "500/minute",
+    },
 }
 
 SIMPLE_JWT = {
@@ -190,6 +210,9 @@ SPECTACULAR_SETTINGS = {
     ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SERVERS": [
+        {"url": "http://127.0.0.1:8000", "description": "Локальный сервер KafIS"},
+    ],
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
         "persistAuthorization": True,
@@ -201,8 +224,16 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
-# ─── CORS Settings ────────────────────────────────────────────────────────────
-CORS_ALLOW_ALL_ORIGINS = True
+# ─── CORS Settings (Strict Origin Whitelist) ──────────────────────────────────
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000",
+    ).split(",")
+    if origin.strip()
+]
 CORS_ALLOW_CREDENTIALS = True
 
 # ─── KafIS Business Constants ─────────────────────────────────────────────────

@@ -72,6 +72,11 @@ class StudyGroupViewSet(viewsets.ModelViewSet):
     serializer_class = StudyGroupSerializer
     permission_classes = [IsTeacherOrAbove]
 
+    def get_permissions(self):
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            return [IsHeadOrAdmin()]
+        return [IsTeacherOrAbove()]
+
     def get_queryset(self):
         qs = super().get_queryset()
         course = self.request.query_params.get("course")
@@ -93,12 +98,79 @@ class DisciplineViewSet(viewsets.ModelViewSet):
     serializer_class = DisciplineSerializer
     permission_classes = [IsTeacherOrAbove]
 
+    def get_permissions(self):
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            return [IsHeadOrAdmin()]
+        return [IsTeacherOrAbove()]
+
     def get_queryset(self):
         qs = super().get_queryset()
         lesson_type = self.request.query_params.get("lesson_type")
         if lesson_type:
             qs = qs.filter(lesson_type=lesson_type)
         return qs
+
+    @extend_schema(
+        tags=["Дисциплины"],
+        summary="Карточка дисциплины с преподавателями, группами и успеваемостью",
+    )
+    @action(detail=True, methods=["get"])
+    def card(self, request, pk=None):
+        discipline = self.get_object()
+        from grades.models import Grade
+        from surveys.models import SurveyAnswer
+        from django.db.models import Avg
+
+        workloads = (
+            Workload.objects.filter(discipline=discipline)
+            .select_related("teacher", "group")
+            .order_by("teacher__full_name")
+        )
+
+        teachers_map = {}
+        groups_set = set()
+        for w in workloads:
+            t_id = w.teacher_id
+            if t_id not in teachers_map:
+                teachers_map[t_id] = {
+                    "teacher_id": t_id,
+                    "teacher_name": w.teacher.full_name,
+                    "position": w.teacher.position,
+                    "groups": [],
+                    "hours_plan": 0,
+                    "hours_fact": 0,
+                }
+            if w.group:
+                g_name = w.group.name
+                groups_set.add(g_name)
+                if g_name not in teachers_map[t_id]["groups"]:
+                    teachers_map[t_id]["groups"].append(g_name)
+            teachers_map[t_id]["hours_plan"] += w.hours_plan
+            teachers_map[t_id]["hours_fact"] += w.hours_fact
+
+        gr_qs = Grade.objects.filter(discipline=discipline)
+        avg_grade = gr_qs.aggregate(avg=Avg("grade"))["avg"]
+        grades_count = gr_qs.count()
+
+        answers = SurveyAnswer.objects.filter(assignment__discipline=discipline, score__isnull=False)
+        avg_score = answers.aggregate(avg=Avg("score"))["avg"]
+        satisfaction_rate = round(float(avg_score) / 5.0 * 100, 1) if avg_score else None
+
+        return Response({
+            "id": discipline.id,
+            "name": discipline.name,
+            "code": discipline.code,
+            "total_hours": discipline.total_hours,
+            "lesson_type": discipline.lesson_type,
+            "lesson_type_display": discipline.get_lesson_type_display(),
+            "teachers": list(teachers_map.values()),
+            "groups": sorted(list(groups_set)),
+            "hours_plan_total": sum(t["hours_plan"] for t in teachers_map.values()),
+            "hours_fact_total": sum(t["hours_fact"] for t in teachers_map.values()),
+            "avg_grade": round(float(avg_grade), 2) if avg_grade is not None else 0.0,
+            "grades_count": grades_count,
+            "satisfaction_rate": satisfaction_rate,
+        })
 
 
 @extend_schema(tags=["Учебная нагрузка"])
@@ -183,17 +255,33 @@ class WorkloadViewSet(viewsets.ModelViewSet):
         teacher_id = request.query_params.get("teacher_id")
         semester = request.query_params.get("semester")
 
-        # Если запрашивает преподаватель и не указал ID — берем его профиль
-        if not teacher_id and request.user.role == "teacher":
+        # Защита от IDOR: преподаватель может смотреть ТОЛЬКО свою статистику
+        if request.user.role == "teacher":
             teacher_profile = getattr(request.user, "teacher_profile", None)
-            if teacher_profile:
-                teacher_id = teacher_profile.id
+            if not teacher_profile:
+                return Response(
+                    {"detail": "Профиль преподавателя не найден."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if teacher_id and str(teacher_id) != str(teacher_profile.id):
+                return Response(
+                    {"detail": "Доступ запрещен: преподаватель может просматривать только свою статистику нагрузки."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            target_id = teacher_profile.id
+        else:
+            if not teacher_id:
+                return Response(
+                    {"error": "Параметр teacher_id обязателен для завкафедрой/администратора"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                target_id = int(teacher_id)
+            except (ValueError, TypeError):
+                return Response(
+                    {"detail": "Некорректный ID преподавателя."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        if not teacher_id:
-            return Response(
-                {"error": "Параметр teacher_id обязателен для завкафедрой/администратора"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        data = calculate_teacher_workload_stats(int(teacher_id), semester=semester)
+        data = calculate_teacher_workload_stats(target_id, semester=semester)
         return Response(data, status=status.HTTP_200_OK)

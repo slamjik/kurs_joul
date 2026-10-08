@@ -1,0 +1,5260 @@
+openapi: 3.0.3
+info:
+  title: KafIS API — Информационная система кафедры ГиСЭН
+  version: 1.0.0
+  description: REST API информационной системы кафедры Гуманитарных и социально-экономических
+    наук (ГиСЭН) НФ НИТУ МИСИС. Включает планирование учебной нагрузки, мониторинг
+    успеваемости, расчёт KPI кафедры и экспорт отчётности.
+paths:
+  /api/audit/:
+    get:
+      operationId: api_audit_list
+      description: 'Просмотр журнала аудита изменений системы KafIS.
+
+        Доступно только заведующему кафедрой и администратору.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Журнал аудита
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogListList'
+          description: ''
+  /api/audit/{id}/:
+    get:
+      operationId: api_audit_retrieve
+      description: 'Просмотр журнала аудита изменений системы KafIS.
+
+        Доступно только заведующему кафедрой и администратору.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Запись аудита.
+        required: true
+      tags:
+      - Журнал аудита
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogDetail'
+          description: ''
+  /api/auth/login/:
+    post:
+      operationId: api_auth_login_create
+      description: Принимает логин и пароль. Возвращает пару токенов (access, refresh)
+        и профиль пользователя с его ролью.
+      summary: Авторизация пользователя (получение JWT токенов)
+      tags:
+      - Аутентификация
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          description: Успешный вход в систему
+        '401':
+          description: Неверный логин или пароль
+  /api/auth/me/:
+    get:
+      operationId: api_auth_me_retrieve
+      description: Возвращает ID, имя, email, роль и полномочия авторизованного пользователя.
+      summary: Получение профиля текущего пользователя
+      tags:
+      - Аутентификация
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+          description: ''
+  /api/auth/refresh/:
+    post:
+      operationId: api_auth_refresh_create
+      description: Принимает refresh-токен и возвращает новый access-токен.
+      summary: Обновление JWT access-токена
+      tags:
+      - Аутентификация
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/auth/users/:
+    get:
+      operationId: api_auth_users_list
+      description: 'CRUD для управления пользователями системы KafIS.
+
+        Доступно только администратору (admin).'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Управление пользователями
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserListList'
+          description: ''
+    post:
+      operationId: api_auth_users_create
+      description: 'CRUD для управления пользователями системы KafIS.
+
+        Доступно только администратору (admin).'
+      tags:
+      - Управление пользователями
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+          description: ''
+  /api/auth/users/{id}/:
+    get:
+      operationId: api_auth_users_retrieve
+      description: 'CRUD для управления пользователями системы KafIS.
+
+        Доступно только администратору (admin).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пользователь.
+        required: true
+      tags:
+      - Управление пользователями
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+          description: ''
+    put:
+      operationId: api_auth_users_update
+      description: 'CRUD для управления пользователями системы KafIS.
+
+        Доступно только администратору (admin).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пользователь.
+        required: true
+      tags:
+      - Управление пользователями
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+          description: ''
+    patch:
+      operationId: api_auth_users_partial_update
+      description: 'CRUD для управления пользователями системы KafIS.
+
+        Доступно только администратору (admin).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пользователь.
+        required: true
+      tags:
+      - Управление пользователями
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+          description: ''
+    delete:
+      operationId: api_auth_users_destroy
+      description: 'CRUD для управления пользователями системы KafIS.
+
+        Доступно только администратору (admin).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Пользователь.
+        required: true
+      tags:
+      - Управление пользователями
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/disciplines/:
+    get:
+      operationId: api_disciplines_list
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Дисциплины
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDisciplineList'
+          description: ''
+    post:
+      operationId: api_disciplines_create
+      description: Справочник учебных дисциплин кафедры.
+      tags:
+      - Дисциплины
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+  /api/disciplines/{id}/:
+    get:
+      operationId: api_disciplines_retrieve
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+    put:
+      operationId: api_disciplines_update
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+    patch:
+      operationId: api_disciplines_partial_update
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDiscipline'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDiscipline'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDiscipline'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+    delete:
+      operationId: api_disciplines_destroy
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/grades/:
+    get:
+      operationId: api_grades_list
+      description: 'Журнал академической успеваемости студентов:
+
+        - Просмотр оценок с фильтрацией (группа, предмет, преподаватель, семестр,
+        источник)
+
+        - Автоматическое выявление студентов в «зоне риска» (< 3.0)
+
+        - Динамика оценок по семестрам для линейного графика
+
+        - Распределение по уровням качества для круговой диаграммы'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Успеваемость и оценки
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGradeListList'
+          description: ''
+    post:
+      operationId: api_grades_create
+      description: 'Журнал академической успеваемости студентов:
+
+        - Просмотр оценок с фильтрацией (группа, предмет, преподаватель, семестр,
+        источник)
+
+        - Автоматическое выявление студентов в «зоне риска» (< 3.0)
+
+        - Динамика оценок по семестрам для линейного графика
+
+        - Распределение по уровням качества для круговой диаграммы'
+      tags:
+      - Успеваемость и оценки
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GradeDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GradeDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeDetail'
+          description: ''
+  /api/grades/{id}/:
+    get:
+      operationId: api_grades_retrieve
+      description: 'Журнал академической успеваемости студентов:
+
+        - Просмотр оценок с фильтрацией (группа, предмет, преподаватель, семестр,
+        источник)
+
+        - Автоматическое выявление студентов в «зоне риска» (< 3.0)
+
+        - Динамика оценок по семестрам для линейного графика
+
+        - Распределение по уровням качества для круговой диаграммы'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Оценка.
+        required: true
+      tags:
+      - Успеваемость и оценки
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeDetail'
+          description: ''
+    put:
+      operationId: api_grades_update
+      description: 'Журнал академической успеваемости студентов:
+
+        - Просмотр оценок с фильтрацией (группа, предмет, преподаватель, семестр,
+        источник)
+
+        - Автоматическое выявление студентов в «зоне риска» (< 3.0)
+
+        - Динамика оценок по семестрам для линейного графика
+
+        - Распределение по уровням качества для круговой диаграммы'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Оценка.
+        required: true
+      tags:
+      - Успеваемость и оценки
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GradeDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GradeDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeDetail'
+          description: ''
+    patch:
+      operationId: api_grades_partial_update
+      description: 'Журнал академической успеваемости студентов:
+
+        - Просмотр оценок с фильтрацией (группа, предмет, преподаватель, семестр,
+        источник)
+
+        - Автоматическое выявление студентов в «зоне риска» (< 3.0)
+
+        - Динамика оценок по семестрам для линейного графика
+
+        - Распределение по уровням качества для круговой диаграммы'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Оценка.
+        required: true
+      tags:
+      - Успеваемость и оценки
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGradeDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGradeDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGradeDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeDetail'
+          description: ''
+    delete:
+      operationId: api_grades_destroy
+      description: 'Журнал академической успеваемости студентов:
+
+        - Просмотр оценок с фильтрацией (группа, предмет, преподаватель, семестр,
+        источник)
+
+        - Автоматическое выявление студентов в «зоне риска» (< 3.0)
+
+        - Динамика оценок по семестрам для линейного графика
+
+        - Распределение по уровням качества для круговой диаграммы'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Оценка.
+        required: true
+      tags:
+      - Успеваемость и оценки
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/grades/dynamics/:
+    get:
+      operationId: api_grades_dynamics_list
+      description: Возвращает хронологию среднего балла и % положительных оценок по
+        семестрам.
+      summary: Динамика успеваемости по семестрам (для линейного графика)
+      parameters:
+      - in: query
+        name: discipline
+        schema:
+          type: integer
+        description: ID дисциплины
+      - in: query
+        name: group
+        schema:
+          type: integer
+        description: ID группы
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: teacher
+        schema:
+          type: integer
+        description: ID преподавателя
+      tags:
+      - Успеваемость и оценки
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGradesDynamicsList'
+          description: ''
+  /api/grades/import/:
+    post:
+      operationId: api_grades_import_create
+      description: Принимает ведомость оценок в формате Excel и сохраняет оценки в
+        базу данных.
+      summary: Импорт оценок студентов из Excel (.xlsx)
+      tags:
+      - Импорт данных
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+          description: ''
+  /api/grades/import-lms/:
+    post:
+      operationId: api_grades_import_lms_create
+      description: Запускает процедуру синхронизации оценок по выбранному курсу из
+        LMS.
+      summary: Импорт оценок из LMS (Moodle / Mock)
+      tags:
+      - Импорт данных
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LMSImportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LMSImportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LMSImportRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+          description: ''
+  /api/grades/lms-status/:
+    get:
+      operationId: api_grades_lms_status_retrieve
+      description: Возвращает тип активного клиента LMS, статус доступности и список
+        курсов.
+      summary: Статус подключения к LMS
+      tags:
+      - Импорт данных
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LMSStatusResponse'
+          description: ''
+  /api/grades/quality-levels/:
+    get:
+      operationId: api_grades_quality_levels_retrieve
+      description: 'Количество и процент оценок: отлично, хорошо, удовл., неуд.'
+      summary: Распределение уровней качества образования (для круговой диаграммы)
+      parameters:
+      - in: query
+        name: group
+        schema:
+          type: integer
+        description: ID группы
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр
+      tags:
+      - Успеваемость и оценки
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeDetail'
+          description: ''
+  /api/grades/risk-zone/:
+    get:
+      operationId: api_grades_risk_zone_list
+      description: Автоматически вычисляет средний балл студентов и отбирает тех,
+        у кого показатель строго ниже порога RISK_THRESHOLD = 3.0. Возвращает средний
+        балл и список несданных дисциплин.
+      summary: Студенты в «зоне риска» (средний балл < 3.0)
+      parameters:
+      - in: query
+        name: discipline
+        schema:
+          type: integer
+        description: ID дисциплины
+      - in: query
+        name: group
+        schema:
+          type: integer
+        description: ID учебной группы
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр (например, 2024-1)
+      tags:
+      - Успеваемость и оценки
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRiskZoneStudentList'
+          description: ''
+  /api/grades/students/:
+    get:
+      operationId: api_grades_students_list
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Студенты
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudentListList'
+          description: ''
+    post:
+      operationId: api_grades_students_create
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      tags:
+      - Студенты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+  /api/grades/students/{id}/:
+    get:
+      operationId: api_grades_students_retrieve
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+    put:
+      operationId: api_grades_students_update
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+    patch:
+      operationId: api_grades_students_partial_update
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+    delete:
+      operationId: api_grades_students_destroy
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/groups/:
+    get:
+      operationId: api_groups_list
+      description: Справочник академических учебных групп.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Учебные группы
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudyGroupList'
+          description: ''
+    post:
+      operationId: api_groups_create
+      description: Справочник академических учебных групп.
+      tags:
+      - Учебные группы
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+  /api/groups/{id}/:
+    get:
+      operationId: api_groups_retrieve
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+    put:
+      operationId: api_groups_update
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+    patch:
+      operationId: api_groups_partial_update
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStudyGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStudyGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStudyGroup'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+    delete:
+      operationId: api_groups_destroy
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/kpi/directions-summary/:
+    get:
+      operationId: api_kpi_directions_summary_list
+      description: Возвращает количество студентов, средний балл и число неуспевающих
+        по направлениям.
+      summary: Таблица-сводка по направлениям подготовки
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр (например, 2024-1)
+      tags:
+      - KPI-дашборд
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DirectionSummaryItem'
+          description: ''
+  /api/kpi/grades-dynamics/:
+    get:
+      operationId: api_kpi_grades_dynamics_list
+      description: Возвращает динамику среднего балла и % положительных оценок по
+        семестрам.
+      summary: Динамика успеваемости (линейный график)
+      tags:
+      - KPI-дашборд
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GradesDynamics'
+          description: ''
+  /api/kpi/invalidate-cache/:
+    post:
+      operationId: api_kpi_invalidate_cache_create
+      description: Принудительно очищает кэшированные показатели аналитики.
+      summary: Сброс кэша KPI в Redis
+      tags:
+      - KPI-дашборд
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CacheInvalidateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CacheInvalidateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CacheInvalidateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheInvalidateResponse'
+          description: ''
+  /api/kpi/quality-levels/:
+    get:
+      operationId: api_kpi_quality_levels_retrieve
+      description: 'Возвращает доли оценок: отлично, хорошо, удовл., неуд.'
+      summary: Уровни качества образования (круговая диаграмма)
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр (например, 2024-1)
+      tags:
+      - KPI-дашборд
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KpiQualityLevels'
+          description: ''
+  /api/kpi/summary/:
+    get:
+      operationId: api_kpi_summary_retrieve
+      description: Возвращает общее количество студентов, число в зоне риска, выполнение
+        часов и средний балл.
+      summary: Сводные метрики KPI (карточки дашборда)
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр (например, 2024-1)
+      tags:
+      - KPI-дашборд
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KpiSummary'
+          description: ''
+  /api/kpi/workload-chart/:
+    get:
+      operationId: api_kpi_workload_chart_list
+      description: Возвращает план, факт и % выполнения нагрузки для каждого преподавателя
+        кафедры.
+      summary: Нагрузка по преподавателям (гистограмма)
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр (например, 2024-1)
+      tags:
+      - KPI-дашборд
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeacherWorkloadBarItem'
+          description: ''
+  /api/reports/grades-excel/:
+    get:
+      operationId: api_reports_grades_excel_retrieve
+      description: Генерирует форматированный файл Excel со списком оценок студентов.
+      summary: Экспорт ведомости успеваемости в Excel (.xlsx)
+      parameters:
+      - in: query
+        name: discipline
+        schema:
+          type: integer
+        description: ID дисциплины
+      - in: query
+        name: group
+        schema:
+          type: integer
+        description: ID группы
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: 'Семестр (например: 2024-1)'
+      tags:
+      - Экспорт отчётов
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: Файл Excel с ведомостью оценок
+  /api/reports/grades-pdf/:
+    get:
+      operationId: api_reports_grades_pdf_retrieve
+      description: Формирует официальный экзаменационный/зачетный лист с оценками
+        и подписями.
+      summary: Экспорт ведомости успеваемости в PDF
+      parameters:
+      - in: query
+        name: discipline
+        schema:
+          type: integer
+        description: ID дисциплины
+      - in: query
+        name: group
+        schema:
+          type: integer
+        description: ID группы
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: 'Семестр (например: 2024-1)'
+      tags:
+      - Экспорт отчётов
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: Печатная ведомость успеваемости студентов (PDF)
+  /api/reports/workload-excel/:
+    get:
+      operationId: api_reports_workload_excel_retrieve
+      description: Генерирует форматированный файл Excel с таблицей учебных часов
+        кафедры.
+      summary: Экспорт учебной нагрузки в Excel (.xlsx)
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: 'Семестр (например: 2024-1)'
+      - in: query
+        name: teacher
+        schema:
+          type: integer
+        description: ID преподавателя
+      tags:
+      - Экспорт отчётов
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: Файл Excel с таблицей учебной нагрузки
+  /api/reports/workload-pdf/:
+    get:
+      operationId: api_reports_workload_pdf_retrieve
+      description: Формирует официальный печатный PDF-документ кафедры с подписями.
+      summary: Экспорт учебной нагрузки в PDF
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: 'Семестр (например: 2024-1)'
+      tags:
+      - Экспорт отчётов
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: Печатная ведомость учебной нагрузки (PDF)
+  /api/students/:
+    get:
+      operationId: api_students_list
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Студенты
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudentListList'
+          description: ''
+    post:
+      operationId: api_students_create
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      tags:
+      - Студенты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+  /api/students/{id}/:
+    get:
+      operationId: api_students_retrieve
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+    put:
+      operationId: api_students_update
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudentDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+    patch:
+      operationId: api_students_partial_update
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+    delete:
+      operationId: api_students_destroy
+      description: 'Справочник студентов института.
+
+        - Чтение доступно всем авторизованным преподавателям и руководству.
+
+        - Создание/редактирование доступно завкафедрой и администраторам.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Студент.
+        required: true
+      tags:
+      - Студенты
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/surveys/analytics/branch-kpi/:
+    get:
+      operationId: api_surveys_analytics_branch_kpi_retrieve
+      description: 'Аналитические срезы качества образования:
+
+        - Сводный индекс по филиалу и кафедрам (73.4%)
+
+        - Рейтинг преподавателей выбранной кафедры
+
+        - Лепестковая диаграмма (RadarChart) и отзывы преподавателя'
+      summary: Сводный KPI филиала и распределение по кафедрам
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр (напр. 2024-1)
+      tags:
+      - 'Опросы: Аналитика качества'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/surveys/analytics/department-teachers/:
+    get:
+      operationId: api_surveys_analytics_department_teachers_retrieve
+      description: 'Аналитические срезы качества образования:
+
+        - Сводный индекс по филиалу и кафедрам (73.4%)
+
+        - Рейтинг преподавателей выбранной кафедры
+
+        - Лепестковая диаграмма (RadarChart) и отзывы преподавателя'
+      summary: Рейтинг преподавателей кафедры
+      parameters:
+      - in: query
+        name: department
+        schema:
+          type: integer
+        description: ID кафедры
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр
+      tags:
+      - 'Опросы: Аналитика качества'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/surveys/analytics/teacher-radar/:
+    get:
+      operationId: api_surveys_analytics_teacher_radar_retrieve
+      description: 'Аналитические срезы качества образования:
+
+        - Сводный индекс по филиалу и кафедрам (73.4%)
+
+        - Рейтинг преподавателей выбранной кафедры
+
+        - Лепестковая диаграмма (RadarChart) и отзывы преподавателя'
+      summary: Лепестковая диаграмма (Radar) и отзывы преподавателя
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр
+      - in: query
+        name: teacher
+        schema:
+          type: integer
+        description: ID преподавателя
+      tags:
+      - 'Опросы: Аналитика качества'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/surveys/assignments/:
+    get:
+      operationId: api_surveys_assignments_list
+      description: Список доступных опросов по преподавателям и дисциплинам.
+      tags:
+      - 'Опросы: Назначения'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyAssignmentList'
+          description: ''
+  /api/surveys/assignments/{id}/:
+    get:
+      operationId: api_surveys_assignments_retrieve
+      description: Список доступных опросов по преподавателям и дисциплинам.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Назначение анкеты.
+        required: true
+      tags:
+      - 'Опросы: Назначения'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyAssignmentList'
+          description: ''
+  /api/surveys/recommendations/:
+    get:
+      operationId: api_surveys_recommendations_list
+      description: Управление и просмотр методических рекомендаций преподавателям.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - 'Опросы: Рекомендации'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTeacherRecommendationList'
+          description: ''
+    post:
+      operationId: api_surveys_recommendations_create
+      description: Управление и просмотр методических рекомендаций преподавателям.
+      tags:
+      - 'Опросы: Рекомендации'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherRecommendation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeacherRecommendation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeacherRecommendation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherRecommendation'
+          description: ''
+  /api/surveys/recommendations/{id}/:
+    get:
+      operationId: api_surveys_recommendations_retrieve
+      description: Управление и просмотр методических рекомендаций преподавателям.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Рекомендация преподавателю.
+        required: true
+      tags:
+      - 'Опросы: Рекомендации'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherRecommendation'
+          description: ''
+    put:
+      operationId: api_surveys_recommendations_update
+      description: Управление и просмотр методических рекомендаций преподавателям.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Рекомендация преподавателю.
+        required: true
+      tags:
+      - 'Опросы: Рекомендации'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherRecommendation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeacherRecommendation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeacherRecommendation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherRecommendation'
+          description: ''
+    patch:
+      operationId: api_surveys_recommendations_partial_update
+      description: Управление и просмотр методических рекомендаций преподавателям.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Рекомендация преподавателю.
+        required: true
+      tags:
+      - 'Опросы: Рекомендации'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherRecommendation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherRecommendation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherRecommendation'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherRecommendation'
+          description: ''
+    delete:
+      operationId: api_surveys_recommendations_destroy
+      description: Управление и просмотр методических рекомендаций преподавателям.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Рекомендация преподавателю.
+        required: true
+      tags:
+      - 'Опросы: Рекомендации'
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/surveys/submit/:
+    post:
+      operationId: api_surveys_submit_create
+      description: Прием анонимного пакета ответов студента на анкету.
+      summary: Отправить анонимные ответы на анкету
+      tags:
+      - 'Опросы: Прохождение'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveySubmitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SurveySubmitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SurveySubmitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/surveys/templates/:
+    get:
+      operationId: api_surveys_templates_list
+      description: Просмотр активных шаблонов анкет и критериев оценивания.
+      tags:
+      - 'Опросы: Шаблоны анкет'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyTemplate'
+          description: ''
+  /api/surveys/templates/{id}/:
+    get:
+      operationId: api_surveys_templates_retrieve
+      description: Просмотр активных шаблонов анкет и критериев оценивания.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Шаблон анкеты.
+        required: true
+      tags:
+      - 'Опросы: Шаблоны анкет'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyTemplate'
+          description: ''
+  /api/teachers/:
+    get:
+      operationId: api_teachers_list
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Преподаватели
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTeacherListList'
+          description: ''
+    post:
+      operationId: api_teachers_create
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      tags:
+      - Преподаватели
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+  /api/teachers/{id}/:
+    get:
+      operationId: api_teachers_retrieve
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+    put:
+      operationId: api_teachers_update
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+    patch:
+      operationId: api_teachers_partial_update
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+    delete:
+      operationId: api_teachers_destroy
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workload/:
+    get:
+      operationId: api_workload_list
+      description: 'CRUD учебной нагрузки кафедры.
+
+        - Чтение: доступно всем авторизованным преподавателям (преподаватель видит
+        только свои записи).
+
+        - Создание/редактирование: доступно только завкафедрой и администратору.
+
+        - Проверка коллизий: эндпоинт check-conflicts.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Учебная нагрузка
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWorkloadListList'
+          description: ''
+    post:
+      operationId: api_workload_create
+      description: 'CRUD учебной нагрузки кафедры.
+
+        - Чтение: доступно всем авторизованным преподавателям (преподаватель видит
+        только свои записи).
+
+        - Создание/редактирование: доступно только завкафедрой и администратору.
+
+        - Проверка коллизий: эндпоинт check-conflicts.'
+      tags:
+      - Учебная нагрузка
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkloadDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkloadDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkloadDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadDetail'
+          description: ''
+  /api/workload/{id}/:
+    get:
+      operationId: api_workload_retrieve
+      description: 'CRUD учебной нагрузки кафедры.
+
+        - Чтение: доступно всем авторизованным преподавателям (преподаватель видит
+        только свои записи).
+
+        - Создание/редактирование: доступно только завкафедрой и администратору.
+
+        - Проверка коллизий: эндпоинт check-conflicts.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная нагрузка.
+        required: true
+      tags:
+      - Учебная нагрузка
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadDetail'
+          description: ''
+    put:
+      operationId: api_workload_update
+      description: 'CRUD учебной нагрузки кафедры.
+
+        - Чтение: доступно всем авторизованным преподавателям (преподаватель видит
+        только свои записи).
+
+        - Создание/редактирование: доступно только завкафедрой и администратору.
+
+        - Проверка коллизий: эндпоинт check-conflicts.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная нагрузка.
+        required: true
+      tags:
+      - Учебная нагрузка
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkloadDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WorkloadDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WorkloadDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadDetail'
+          description: ''
+    patch:
+      operationId: api_workload_partial_update
+      description: 'CRUD учебной нагрузки кафедры.
+
+        - Чтение: доступно всем авторизованным преподавателям (преподаватель видит
+        только свои записи).
+
+        - Создание/редактирование: доступно только завкафедрой и администратору.
+
+        - Проверка коллизий: эндпоинт check-conflicts.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная нагрузка.
+        required: true
+      tags:
+      - Учебная нагрузка
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkloadDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkloadDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWorkloadDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadDetail'
+          description: ''
+    delete:
+      operationId: api_workload_destroy
+      description: 'CRUD учебной нагрузки кафедры.
+
+        - Чтение: доступно всем авторизованным преподавателям (преподаватель видит
+        только свои записи).
+
+        - Создание/редактирование: доступно только завкафедрой и администратору.
+
+        - Проверка коллизий: эндпоинт check-conflicts.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная нагрузка.
+        required: true
+      tags:
+      - Учебная нагрузка
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workload/check-conflicts/:
+    post:
+      operationId: api_workload_check_conflicts_create
+      description: Проверяет, нет ли накладок по времени (преподаватель в двух местах
+        одновременно, занятая аудитория или параллельные пары у одной группы).
+      summary: Проверка пересечений в расписании (коллизий)
+      tags:
+      - Учебная нагрузка
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConflictCheckRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConflictCheckRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConflictCheckRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictCheckResponse'
+          description: ''
+  /api/workload/departments/:
+    get:
+      operationId: api_workload_departments_list
+      description: Управление кафедрами института.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Кафедры
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartmentList'
+          description: ''
+    post:
+      operationId: api_workload_departments_create
+      description: Управление кафедрами института.
+      tags:
+      - Кафедры
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/workload/departments/{id}/:
+    get:
+      operationId: api_workload_departments_retrieve
+      description: Управление кафедрами института.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Кафедра.
+        required: true
+      tags:
+      - Кафедры
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    put:
+      operationId: api_workload_departments_update
+      description: Управление кафедрами института.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Кафедра.
+        required: true
+      tags:
+      - Кафедры
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    patch:
+      operationId: api_workload_departments_partial_update
+      description: Управление кафедрами института.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Кафедра.
+        required: true
+      tags:
+      - Кафедры
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    delete:
+      operationId: api_workload_departments_destroy
+      description: Управление кафедрами института.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Кафедра.
+        required: true
+      tags:
+      - Кафедры
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workload/disciplines/:
+    get:
+      operationId: api_workload_disciplines_list
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Дисциплины
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDisciplineList'
+          description: ''
+    post:
+      operationId: api_workload_disciplines_create
+      description: Справочник учебных дисциплин кафедры.
+      tags:
+      - Дисциплины
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+  /api/workload/disciplines/{id}/:
+    get:
+      operationId: api_workload_disciplines_retrieve
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+    put:
+      operationId: api_workload_disciplines_update
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+    patch:
+      operationId: api_workload_disciplines_partial_update
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDiscipline'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDiscipline'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDiscipline'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Discipline'
+          description: ''
+    delete:
+      operationId: api_workload_disciplines_destroy
+      description: Справочник учебных дисциплин кафедры.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Дисциплина.
+        required: true
+      tags:
+      - Дисциплины
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workload/export/:
+    get:
+      operationId: api_workload_export_retrieve
+      description: Генерирует форматированный файл Excel с таблицей учебных часов
+        кафедры.
+      summary: Экспорт учебной нагрузки в Excel (.xlsx)
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: 'Семестр (например: 2024-1)'
+      - in: query
+        name: teacher
+        schema:
+          type: integer
+        description: ID преподавателя
+      tags:
+      - Экспорт отчётов
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: Файл Excel с таблицей учебной нагрузки
+  /api/workload/groups/:
+    get:
+      operationId: api_workload_groups_list
+      description: Справочник академических учебных групп.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Учебные группы
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudyGroupList'
+          description: ''
+    post:
+      operationId: api_workload_groups_create
+      description: Справочник академических учебных групп.
+      tags:
+      - Учебные группы
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+  /api/workload/groups/{id}/:
+    get:
+      operationId: api_workload_groups_retrieve
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+    put:
+      operationId: api_workload_groups_update
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StudyGroup'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+    patch:
+      operationId: api_workload_groups_partial_update
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStudyGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStudyGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStudyGroup'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyGroup'
+          description: ''
+    delete:
+      operationId: api_workload_groups_destroy
+      description: Справочник академических учебных групп.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебная группа.
+        required: true
+      tags:
+      - Учебные группы
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/workload/import/:
+    post:
+      operationId: api_workload_import_create
+      description: Принимает файл Excel с колонками преподавателя, предмета, группы,
+        часов и аудитории.
+      summary: Импорт учебной нагрузки из Excel (.xlsx)
+      tags:
+      - Импорт данных
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+          description: ''
+  /api/workload/stats/:
+    get:
+      operationId: api_workload_stats_retrieve
+      description: 'CRUD учебной нагрузки кафедры.
+
+        - Чтение: доступно всем авторизованным преподавателям (преподаватель видит
+        только свои записи).
+
+        - Создание/редактирование: доступно только завкафедрой и администратору.
+
+        - Проверка коллизий: эндпоинт check-conflicts.'
+      summary: Статистика нагрузки преподавателя (план/факт/процент)
+      parameters:
+      - in: query
+        name: semester
+        schema:
+          type: string
+        description: Семестр (например, 2024-1)
+      - in: query
+        name: teacher_id
+        schema:
+          type: integer
+        description: ID преподавателя
+      tags:
+      - Учебная нагрузка
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadDetail'
+          description: ''
+  /api/workload/teachers/:
+    get:
+      operationId: api_workload_teachers_list
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Преподаватели
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTeacherListList'
+          description: ''
+    post:
+      operationId: api_workload_teachers_create
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      tags:
+      - Преподаватели
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+  /api/workload/teachers/{id}/:
+    get:
+      operationId: api_workload_teachers_retrieve
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+    put:
+      operationId: api_workload_teachers_update
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeacherDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+    patch:
+      operationId: api_workload_teachers_partial_update
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTeacherDetail'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherDetail'
+          description: ''
+    delete:
+      operationId: api_workload_teachers_destroy
+      description: 'Управление и просмотр преподавателей кафедры.
+
+        Преподаватели видят только свой профиль, заведующий и администратор — всех.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Преподаватель.
+        required: true
+      tags:
+      - Преподаватели
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - CREATE
+      - UPDATE
+      - DELETE
+      - LOGIN
+      - IMPORT
+      - EXPORT
+      type: string
+      description: '* `CREATE` - Создание записи
+
+        * `UPDATE` - Изменение записи
+
+        * `DELETE` - Удаление записи
+
+        * `LOGIN` - Вход в систему
+
+        * `IMPORT` - Импорт данных
+
+        * `EXPORT` - Экспорт данных'
+    AuditLogDetail:
+      type: object
+      description: Детальный сериализатор записи аудита со снимками изменений.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          nullable: true
+          title: Пользователь
+        user_username:
+          type: string
+          readOnly: true
+          default: Система
+        action:
+          allOf:
+          - $ref: '#/components/schemas/ActionEnum'
+          title: Тип действия
+        action_display:
+          type: string
+          readOnly: true
+        table_name:
+          type: string
+          title: Таблица / сущность
+          description: 'Например: Workload, Grade, Student'
+          maxLength: 100
+        object_id:
+          type: string
+          title: Идентификатор объекта
+          maxLength: 100
+        old_value:
+          nullable: true
+          title: Предыдущее состояние (JSON)
+        new_value:
+          nullable: true
+          title: Новое состояние (JSON)
+        ip_address:
+          type: string
+          nullable: true
+          title: IP-адрес клиента
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - action
+      - action_display
+      - created_at
+      - id
+      - table_name
+      - updated_at
+      - user_username
+    AuditLogList:
+      type: object
+      description: Облегчённый сериализатор для таблицы журнала аудита.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          nullable: true
+          title: Пользователь
+        user_username:
+          type: string
+          readOnly: true
+          default: Система
+        action:
+          allOf:
+          - $ref: '#/components/schemas/ActionEnum'
+          title: Тип действия
+        action_display:
+          type: string
+          readOnly: true
+        table_name:
+          type: string
+          title: Таблица / сущность
+          description: 'Например: Workload, Grade, Student'
+          maxLength: 100
+        object_id:
+          type: string
+          title: Идентификатор объекта
+          maxLength: 100
+        ip_address:
+          type: string
+          nullable: true
+          title: IP-адрес клиента
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+      required:
+      - action
+      - action_display
+      - created_at
+      - id
+      - table_name
+      - user_username
+    CacheInvalidateRequest:
+      type: object
+      description: Схема запроса принудительного сброса кэша KPI.
+      properties:
+        semester:
+          type: string
+          default: all
+          description: Семестр для сброса (например, 2024-1) или 'all' для очистки
+            всего кэша
+    CacheInvalidateResponse:
+      type: object
+      description: Схема ответа после ручной инвалидации кэша KPI.
+      properties:
+        success:
+          type: boolean
+          description: Флаг успешности сброса кэша
+        message:
+          type: string
+          description: Информационное сообщение
+      required:
+      - message
+      - success
+    CategoryEnum:
+      enum:
+      - clarity
+      - fairness
+      - relevance
+      - ethics
+      - facilities
+      - general
+      type: string
+      description: '* `clarity` - Понятность и структурированность подачи материала
+
+        * `fairness` - Объективность и прозрачность системы оценивания
+
+        * `relevance` - Практическая ценность и актуальность содержания
+
+        * `ethics` - Педагогический такт, этика и контакт со студентами
+
+        * `facilities` - Организация учебного процесса и условия обучения
+
+        * `general` - Общие впечатления и пожелания'
+    ConflictCheckRequest:
+      type: object
+      description: Схема запроса для эндпоинта предварительной проверки пересечений.
+      properties:
+        teacher:
+          type: integer
+          description: ID преподавателя
+        group:
+          type: integer
+          description: ID учебной группы
+        room:
+          type: string
+          description: Номер аудитории
+        semester:
+          type: string
+          description: Семестр, например '2024-1'
+        day_of_week:
+          type: integer
+          description: День недели (1-6)
+        lesson_number:
+          type: integer
+          description: Номер пары (1-7)
+        exclude_id:
+          type: integer
+          description: ID текущей записи при редактировании
+      required:
+      - semester
+    ConflictCheckResponse:
+      type: object
+      description: Схема ответа эндпоинта проверки пересечений.
+      properties:
+        has_conflicts:
+          type: boolean
+          description: Флаг наличия пересечений
+        conflicts_count:
+          type: integer
+          description: Количество найденных конфликтов
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkloadList'
+          description: Список конфликтующих записей
+      required:
+      - conflicts
+      - conflicts_count
+      - has_conflicts
+    DayOfWeekEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      type: integer
+      description: '* `1` - Понедельник
+
+        * `2` - Вторник
+
+        * `3` - Среда
+
+        * `4` - Четверг
+
+        * `5` - Пятница
+
+        * `6` - Суббота'
+    Department:
+      type: object
+      description: Сериализатор кафедры.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название кафедры
+          maxLength: 200
+        code:
+          type: string
+          title: Код / аббревиатура кафедры
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - code
+      - created_at
+      - id
+      - name
+      - updated_at
+    DirectionSummaryItem:
+      type: object
+      description: Элемент таблицы-сводки по направлениям подготовки.
+      properties:
+        direction_code:
+          type: string
+          description: Код направления (например, 09.03.01)
+        direction_name:
+          type: string
+          description: Наименование направления
+        students_count:
+          type: integer
+          description: Количество студентов направления
+        avg_grade:
+          type: number
+          format: double
+          description: Средний балл по направлению
+        risk_count:
+          type: integer
+          description: Количество студентов направления в зоне риска
+      required:
+      - avg_grade
+      - direction_code
+      - direction_name
+      - risk_count
+      - students_count
+    Discipline:
+      type: object
+      description: Сериализатор учебной дисциплины.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название дисциплины
+          maxLength: 300
+        code:
+          type: string
+          title: Код дисциплины
+          description: 'Например: GIS-01, INF-02'
+          maxLength: 50
+        total_hours:
+          type: integer
+          title: Всего часов по учебному плану
+        lesson_type:
+          allOf:
+          - $ref: '#/components/schemas/LessonTypeEnum'
+          title: Тип занятия
+        lesson_type_display:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - code
+      - created_at
+      - id
+      - lesson_type_display
+      - name
+      - total_hours
+      - updated_at
+    FileUpload:
+      type: object
+      description: Схема загрузки файла Excel (.xlsx).
+      properties:
+        file:
+          type: string
+          format: uri
+          description: Файл Excel в формате .xlsx
+        semester:
+          type: string
+          default: 2024-1
+          description: Семестр по умолчанию, если не указан внутри файла (например,
+            2024-1)
+      required:
+      - file
+    GradeDetail:
+      type: object
+      description: Полный сериализатор оценки для создания и редактирования.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        student:
+          type: integer
+          title: Студент
+        student_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+        teacher:
+          type: integer
+          nullable: true
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+          default: ''
+        semester:
+          type: string
+          title: Семестр
+          description: 'Например: 2024-1, 2024-2'
+          maxLength: 20
+        grade:
+          type: number
+          format: double
+          maximum: 5.0
+          minimum: 2.0
+          title: Оценка
+          description: Числовая оценка от 2.0 (неуд) до 5.0 (отл)
+        date:
+          type: string
+          format: date
+          nullable: true
+          title: Дата выставления
+        source:
+          allOf:
+          - $ref: '#/components/schemas/GradeSourceEnum'
+          title: Источник данных
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - created_at
+      - discipline
+      - discipline_name
+      - grade
+      - id
+      - semester
+      - student
+      - student_name
+      - teacher_name
+      - updated_at
+    GradeList:
+      type: object
+      description: Облегчённый сериализатор для вывода журнала оценок.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        student:
+          type: integer
+          title: Студент
+        student_name:
+          type: string
+          readOnly: true
+        group_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+        teacher:
+          type: integer
+          nullable: true
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+          default: ''
+        semester:
+          type: string
+          title: Семестр
+          description: 'Например: 2024-1, 2024-2'
+          maxLength: 20
+        grade:
+          type: number
+          format: double
+          maximum: 5.0
+          minimum: 2.0
+          title: Оценка
+          description: Числовая оценка от 2.0 (неуд) до 5.0 (отл)
+        date:
+          type: string
+          format: date
+          nullable: true
+          title: Дата выставления
+        source:
+          allOf:
+          - $ref: '#/components/schemas/GradeSourceEnum'
+          title: Источник данных
+        source_display:
+          type: string
+          readOnly: true
+      required:
+      - discipline
+      - discipline_name
+      - grade
+      - group_name
+      - id
+      - semester
+      - source_display
+      - student
+      - student_name
+      - teacher_name
+    GradeSourceEnum:
+      enum:
+      - manual
+      - excel
+      - moodle
+      - mock
+      type: string
+      description: '* `manual` - Вручную
+
+        * `excel` - Импорт из Excel
+
+        * `moodle` - LMS Moodle
+
+        * `mock` - Тестовые данные (LMS Mock)'
+    GradesDynamics:
+      type: object
+      description: Схема данных динамики успеваемости по семестрам.
+      properties:
+        semester:
+          type: string
+          description: Семестр, например '2024-1'
+        avg_grade:
+          type: number
+          format: double
+          description: Средний балл по семестру
+        total_grades:
+          type: integer
+          description: Количество выставленных оценок
+        pass_rate:
+          type: number
+          format: double
+          description: Процент положительных оценок (>= 3.0)
+      required:
+      - avg_grade
+      - pass_rate
+      - semester
+      - total_grades
+    ImportResult:
+      type: object
+      description: Схема ответа после выполнения операции импорта.
+      properties:
+        success:
+          type: boolean
+          description: Флаг успешности импорта
+        created:
+          type: integer
+          default: 0
+          description: Количество созданных записей
+        synced:
+          type: integer
+          default: 0
+          description: Количество синхронизированных записей
+        errors:
+          type: array
+          items:
+            type: string
+          description: Список предупреждений или ошибок по строкам
+        source:
+          type: string
+          description: Источник данных (excel, mock, moodle)
+      required:
+      - errors
+      - success
+    KpiQualityLevels:
+      type: object
+      description: Схема распределения оценок по уровням качества (для круговой диаграммы).
+      properties:
+        excellent:
+          type: integer
+          description: Оценки 'Отлично' (>= 4.5)
+        good:
+          type: integer
+          description: Оценки 'Хорошо' (3.5 - 4.49)
+        satisfactory:
+          type: integer
+          description: Оценки 'Удовлетворительно' (3.0 - 3.49)
+        unsatisfactory:
+          type: integer
+          description: Оценки 'Неудовлетворительно' (< 3.0)
+        total:
+          type: integer
+          description: Всего выставленных оценок
+        quality_rate:
+          type: number
+          format: double
+          description: Доля качественных оценок (отлично + хорошо) в %
+      required:
+      - excellent
+      - good
+      - quality_rate
+      - satisfactory
+      - total
+      - unsatisfactory
+    KpiSummary:
+      type: object
+      description: Схема ключевых сводных показателей кафедры для информационных карточек.
+      properties:
+        total_students:
+          type: integer
+          description: Всего студентов кафедры
+        risk_students_count:
+          type: integer
+          description: Количество студентов в зоне риска (< 3.0)
+        risk_students_pct:
+          type: number
+          format: double
+          description: Процент студентов в зоне риска
+        hours_plan_total:
+          type: integer
+          description: Всего плановых часов по учебной нагрузке
+        hours_fact_total:
+          type: integer
+          description: Всего фактически выполненных часов
+        hours_completion_pct:
+          type: number
+          format: double
+          description: Процент закрытия часов (план/факт)
+        avg_grade:
+          type: number
+          format: double
+          description: Средний академический балл
+        quality_rate:
+          type: number
+          format: double
+          description: Процент качественной успеваемости (оценки 4 и 5)
+      required:
+      - avg_grade
+      - hours_completion_pct
+      - hours_fact_total
+      - hours_plan_total
+      - quality_rate
+      - risk_students_count
+      - risk_students_pct
+      - total_students
+    LMSCourse:
+      type: object
+      description: Схема информации о курсе в LMS.
+      properties:
+        id:
+          type: string
+          description: ID курса в LMS
+        name:
+          type: string
+          description: Название курса
+        discipline_code:
+          type: string
+          default: ''
+          description: Код дисциплины
+      required:
+      - id
+      - name
+    LMSImportRequest:
+      type: object
+      description: Схема параметров для запуска синхронизации с LMS.
+      properties:
+        course_id:
+          type: string
+          default: c001
+          description: 'Идентификатор курса в LMS (например: c001)'
+        semester:
+          type: string
+          default: 2024-1
+          description: 'Семестр для привязки оценок (например: 2024-1)'
+    LMSStatusResponse:
+      type: object
+      description: Схема ответа статуса подключения к LMS.
+      properties:
+        backend:
+          type: string
+          description: Имя активного класса бэкенда LMS
+        is_available:
+          type: boolean
+          description: Флаг доступности LMS
+        courses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LMSCourse'
+          description: Список курсов в LMS
+      required:
+      - backend
+      - courses
+      - is_available
+    LessonNumberEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      type: integer
+      description: '* `1` - 1 пара (08:30 - 10:00)
+
+        * `2` - 2 пара (10:10 - 11:40)
+
+        * `3` - 3 пара (12:00 - 13:30)
+
+        * `4` - 4 пара (13:40 - 15:10)
+
+        * `5` - 5 пара (15:20 - 16:50)
+
+        * `6` - 6 пара (17:00 - 18:30)
+
+        * `7` - 7 пара (18:40 - 20:10)'
+    LessonTypeEnum:
+      enum:
+      - lecture
+      - practice
+      - lab
+      type: string
+      description: '* `lecture` - Лекция
+
+        * `practice` - Практика
+
+        * `lab` - Лабораторная работа'
+    LoginRequest:
+      type: object
+      description: Схема запроса авторизации по логину и паролю.
+      properties:
+        username:
+          type: string
+          description: Имя пользователя (логин)
+        password:
+          type: string
+          writeOnly: true
+          description: Пароль пользователя
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      description: Схема ответа при успешной авторизации с JWT токенами.
+      properties:
+        access:
+          type: string
+          description: Access токен (JWT, 60 минут)
+        refresh:
+          type: string
+          description: Refresh токен (JWT, 7 дней)
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserDetail'
+          description: Данные авторизованного пользователя
+      required:
+      - access
+      - refresh
+      - user
+    NullEnum:
+      enum:
+      - null
+    PaginatedAuditLogListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogList'
+    PaginatedDepartmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
+    PaginatedDisciplineList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Discipline'
+    PaginatedGradeListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeList'
+    PaginatedGradesDynamicsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradesDynamics'
+    PaginatedRiskZoneStudentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskZoneStudent'
+    PaginatedStudentListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentList'
+    PaginatedStudyGroupList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudyGroup'
+    PaginatedTeacherListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeacherList'
+    PaginatedTeacherRecommendationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeacherRecommendation'
+    PaginatedUserListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserList'
+    PaginatedWorkloadListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkloadList'
+    PatchedDepartment:
+      type: object
+      description: Сериализатор кафедры.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название кафедры
+          maxLength: 200
+        code:
+          type: string
+          title: Код / аббревиатура кафедры
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    PatchedDiscipline:
+      type: object
+      description: Сериализатор учебной дисциплины.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название дисциплины
+          maxLength: 300
+        code:
+          type: string
+          title: Код дисциплины
+          description: 'Например: GIS-01, INF-02'
+          maxLength: 50
+        total_hours:
+          type: integer
+          title: Всего часов по учебному плану
+        lesson_type:
+          allOf:
+          - $ref: '#/components/schemas/LessonTypeEnum'
+          title: Тип занятия
+        lesson_type_display:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    PatchedGradeDetail:
+      type: object
+      description: Полный сериализатор оценки для создания и редактирования.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        student:
+          type: integer
+          title: Студент
+        student_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+        teacher:
+          type: integer
+          nullable: true
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+          default: ''
+        semester:
+          type: string
+          title: Семестр
+          description: 'Например: 2024-1, 2024-2'
+          maxLength: 20
+        grade:
+          type: number
+          format: double
+          maximum: 5.0
+          minimum: 2.0
+          title: Оценка
+          description: Числовая оценка от 2.0 (неуд) до 5.0 (отл)
+        date:
+          type: string
+          format: date
+          nullable: true
+          title: Дата выставления
+        source:
+          allOf:
+          - $ref: '#/components/schemas/GradeSourceEnum'
+          title: Источник данных
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    PatchedStudentDetail:
+      type: object
+      description: Детальный сериализатор студента.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        full_name:
+          type: string
+          title: ФИО студента
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          title: Email студента
+          maxLength: 254
+        group:
+          type: integer
+          title: Учебная группа
+        group_name:
+          type: string
+          readOnly: true
+        direction_name:
+          type: string
+          readOnly: true
+        course:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    PatchedStudyGroup:
+      type: object
+      description: Сериализатор академической учебной группы.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название группы
+          description: 'Например: БПИ-22-1, ЭК-21'
+          maxLength: 50
+        direction_code:
+          type: string
+          title: Код направления подготовки
+          description: 'Например: 09.03.01, 38.03.01'
+          maxLength: 20
+        direction_name:
+          type: string
+          title: Наименование направления подготовки
+          description: 'Например: Информатика и вычислительная техника, Экономика'
+          maxLength: 200
+        course:
+          type: integer
+          title: Номер курса
+          description: Курс обучения (1-6)
+        year:
+          type: integer
+          title: Год поступления
+          description: 'Например: 2022'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    PatchedTeacherDetail:
+      type: object
+      description: Детальный сериализатор профиля преподавателя.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          title: Пользователь
+        department:
+          type: integer
+          title: Кафедра
+        department_name:
+          type: string
+          readOnly: true
+        full_name:
+          type: string
+          title: ФИО преподавателя
+          maxLength: 200
+        position:
+          type: string
+          title: Должность
+          description: 'Например: Профессор, Доцент, Старший преподаватель, Ассистент'
+          maxLength: 100
+        hours_limit:
+          type: number
+          format: double
+          title: Лимит часов в год
+          description: Норма годовой учебной нагрузки (по умолчанию 900 часов)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    PatchedTeacherRecommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        teacher:
+          type: integer
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          nullable: true
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+          default: Кафедра
+        semester:
+          type: string
+          title: Семестр
+          maxLength: 20
+        category:
+          type: string
+          title: Категория проблемы
+          maxLength: 50
+        source:
+          allOf:
+          - $ref: '#/components/schemas/RecommendationSourceEnum'
+          title: Источник рекомендации
+        source_display:
+          type: string
+          readOnly: true
+        recommendation_text:
+          type: string
+          title: Текст рекомендации
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          title: Статус
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+    PatchedUserDetail:
+      type: object
+      description: Полный сериализатор профиля пользователя.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email адрес
+          maxLength: 254
+        first_name:
+          type: string
+          title: Имя
+          maxLength: 150
+        last_name:
+          type: string
+          title: Фамилия
+          maxLength: 150
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Роль в системе
+        is_active:
+          type: boolean
+          title: Активный
+          description: Отметьте, если пользователь должен считаться активным. Уберите
+            эту отметку вместо удаления учётной записи.
+        is_head:
+          type: boolean
+          readOnly: true
+        is_teacher:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    PatchedWorkloadDetail:
+      type: object
+      description: 'Полный сериализатор нагрузки: используется для создания и редактирования.
+
+        Автоматически валидирует отсутствие коллизий в расписании.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        teacher:
+          type: integer
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+        group:
+          type: integer
+          title: Учебная группа
+        group_name:
+          type: string
+          readOnly: true
+        hours_plan:
+          type: integer
+          title: Плановые часы
+        hours_fact:
+          type: integer
+          title: Фактически проведенные часы
+        semester:
+          type: string
+          title: Учебный семестр
+          description: 'Формат: ГГГГ-N, например: 2024-1 (осенний) или 2024-2 (весенний)'
+          maxLength: 20
+        room:
+          type: string
+          title: Номер аудитории
+          description: 'Например: 101, Акт. зал'
+          maxLength: 50
+        day_of_week:
+          nullable: true
+          title: День недели
+          oneOf:
+          - $ref: '#/components/schemas/DayOfWeekEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        lesson_number:
+          nullable: true
+          title: Номер пары
+          oneOf:
+          - $ref: '#/components/schemas/LessonNumberEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+    QuestionTypeEnum:
+      enum:
+      - scale_5
+      - text
+      type: string
+      description: '* `scale_5` - Оценка по шкале (1–5 звезд)
+
+        * `text` - Текстовый отзыв в свободной форме'
+    RecommendationSourceEnum:
+      enum:
+      - auto
+      - head
+      type: string
+      description: '* `auto` - Автоматически сформирована системой (Rule-Based)
+
+        * `head` - Вынесена заведующим кафедрой'
+    RiskZoneStudent:
+      type: object
+      description: Схема данных студента в зоне риска.
+      properties:
+        student_id:
+          type: integer
+          description: ID студента
+        student_name:
+          type: string
+          description: ФИО студента
+        email:
+          type: string
+          format: email
+          description: Email студента
+        group_id:
+          type: integer
+          description: ID группы
+        group_name:
+          type: string
+          description: Название учебной группы
+        avg_grade:
+          type: number
+          format: double
+          description: Средний академический балл
+        grades_count:
+          type: integer
+          description: Всего полученных оценок
+        failing_disciplines:
+          type: array
+          items:
+            type: string
+          description: Список предметов с задолженностями/неудами (< 3.0)
+      required:
+      - avg_grade
+      - email
+      - failing_disciplines
+      - grades_count
+      - group_id
+      - group_name
+      - student_id
+      - student_name
+    RoleEnum:
+      enum:
+      - head
+      - teacher
+      - admin
+      type: string
+      description: '* `head` - Заведующий кафедрой
+
+        * `teacher` - Преподаватель
+
+        * `admin` - Администратор'
+    SingleAnswerSubmit:
+      type: object
+      properties:
+        question_id:
+          type: integer
+        score:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+        text_response:
+          type: string
+          default: ''
+      required:
+      - question_id
+    StatusEnum:
+      enum:
+      - draft
+      - published
+      - reviewed
+      type: string
+      description: '* `draft` - Черновик
+
+        * `published` - Опубликована
+
+        * `reviewed` - Принята к сведению'
+    StudentDetail:
+      type: object
+      description: Детальный сериализатор студента.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        full_name:
+          type: string
+          title: ФИО студента
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          title: Email студента
+          maxLength: 254
+        group:
+          type: integer
+          title: Учебная группа
+        group_name:
+          type: string
+          readOnly: true
+        direction_name:
+          type: string
+          readOnly: true
+        course:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - course
+      - created_at
+      - direction_name
+      - full_name
+      - group
+      - group_name
+      - id
+      - updated_at
+    StudentList:
+      type: object
+      description: Облегчённый сериализатор для списков студентов.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        full_name:
+          type: string
+          title: ФИО студента
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          title: Email студента
+          maxLength: 254
+        group:
+          type: integer
+          title: Учебная группа
+        group_name:
+          type: string
+          readOnly: true
+      required:
+      - full_name
+      - group
+      - group_name
+      - id
+    StudyGroup:
+      type: object
+      description: Сериализатор академической учебной группы.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название группы
+          description: 'Например: БПИ-22-1, ЭК-21'
+          maxLength: 50
+        direction_code:
+          type: string
+          title: Код направления подготовки
+          description: 'Например: 09.03.01, 38.03.01'
+          maxLength: 20
+        direction_name:
+          type: string
+          title: Наименование направления подготовки
+          description: 'Например: Информатика и вычислительная техника, Экономика'
+          maxLength: 200
+        course:
+          type: integer
+          title: Номер курса
+          description: Курс обучения (1-6)
+        year:
+          type: integer
+          title: Год поступления
+          description: 'Например: 2022'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - course
+      - created_at
+      - direction_code
+      - direction_name
+      - id
+      - name
+      - updated_at
+      - year
+    SurveyAssignmentList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        template:
+          type: integer
+          title: Шаблон анкеты
+        template_title:
+          type: string
+          readOnly: true
+        teacher:
+          type: integer
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+        group:
+          type: integer
+          nullable: true
+          title: Учебная группа
+        group_name:
+          type: string
+          readOnly: true
+          default: Все группы
+        department:
+          type: integer
+          nullable: true
+          title: Кафедра
+        department_name:
+          type: string
+          readOnly: true
+          default: Филиал
+        is_open:
+          type: boolean
+          title: Прием ответов открыт
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyQuestion'
+          readOnly: true
+      required:
+      - department_name
+      - discipline
+      - discipline_name
+      - group_name
+      - id
+      - questions
+      - teacher
+      - teacher_name
+      - template
+      - template_title
+    SurveyQuestion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          title: Категория критерия
+        category_display:
+          type: string
+          readOnly: true
+        text:
+          type: string
+          title: Текст вопроса
+        question_type:
+          allOf:
+          - $ref: '#/components/schemas/QuestionTypeEnum'
+          title: Тип вопроса
+        question_type_display:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          title: Порядок отображения
+      required:
+      - category_display
+      - id
+      - question_type_display
+      - text
+    SurveySubmitRequest:
+      type: object
+      properties:
+        assignment_id:
+          type: integer
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SingleAnswerSubmit'
+      required:
+      - answers
+      - assignment_id
+    SurveyTemplate:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          title: Название анкеты
+          description: 'Например: Опрос по качеству преподавания за осенний семестр
+            2024/2025'
+          maxLength: 255
+        description:
+          type: string
+          title: Описание и инструкция
+          description: Пояснение для студентов о целях опроса и гарантиях анонимности
+        academic_year:
+          type: string
+          title: Учебный год
+          maxLength: 20
+        semester:
+          type: string
+          title: Семестр
+          maxLength: 20
+        is_active:
+          type: boolean
+          title: Активна для прохождения
+        questions_count:
+          type: integer
+          readOnly: true
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyQuestion'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+      required:
+      - created_at
+      - id
+      - questions
+      - questions_count
+      - title
+    TeacherDetail:
+      type: object
+      description: Детальный сериализатор профиля преподавателя.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          title: Пользователь
+        department:
+          type: integer
+          title: Кафедра
+        department_name:
+          type: string
+          readOnly: true
+        full_name:
+          type: string
+          title: ФИО преподавателя
+          maxLength: 200
+        position:
+          type: string
+          title: Должность
+          description: 'Например: Профессор, Доцент, Старший преподаватель, Ассистент'
+          maxLength: 100
+        hours_limit:
+          type: number
+          format: double
+          title: Лимит часов в год
+          description: Норма годовой учебной нагрузки (по умолчанию 900 часов)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - created_at
+      - department
+      - department_name
+      - full_name
+      - id
+      - position
+      - updated_at
+      - user
+    TeacherList:
+      type: object
+      description: Облегчённый сериализатор для списков преподавателей.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          title: Пользователь
+        user_username:
+          type: string
+          readOnly: true
+        department:
+          type: integer
+          title: Кафедра
+        department_name:
+          type: string
+          readOnly: true
+        full_name:
+          type: string
+          title: ФИО преподавателя
+          maxLength: 200
+        position:
+          type: string
+          title: Должность
+          description: 'Например: Профессор, Доцент, Старший преподаватель, Ассистент'
+          maxLength: 100
+        hours_limit:
+          type: number
+          format: double
+          title: Лимит часов в год
+          description: Норма годовой учебной нагрузки (по умолчанию 900 часов)
+      required:
+      - department
+      - department_name
+      - full_name
+      - id
+      - position
+      - user
+      - user_username
+    TeacherRecommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        teacher:
+          type: integer
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          nullable: true
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+          default: Кафедра
+        semester:
+          type: string
+          title: Семестр
+          maxLength: 20
+        category:
+          type: string
+          title: Категория проблемы
+          maxLength: 50
+        source:
+          allOf:
+          - $ref: '#/components/schemas/RecommendationSourceEnum'
+          title: Источник рекомендации
+        source_display:
+          type: string
+          readOnly: true
+        recommendation_text:
+          type: string
+          title: Текст рекомендации
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          title: Статус
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+      required:
+      - created_at
+      - discipline_name
+      - id
+      - recommendation_text
+      - source_display
+      - teacher
+      - teacher_name
+    TeacherWorkloadBarItem:
+      type: object
+      description: Элемент гистограммы распределения нагрузки преподавателей.
+      properties:
+        teacher_id:
+          type: integer
+          description: ID преподавателя
+        teacher_name:
+          type: string
+          description: ФИО преподавателя
+        hours_limit:
+          type: number
+          format: double
+          description: Годовой лимит часов
+        hours_plan:
+          type: integer
+          description: Плановые часы
+        hours_fact:
+          type: integer
+          description: Фактические часы
+        completion_pct:
+          type: number
+          format: double
+          description: Процент выполнения плана
+      required:
+      - completion_pct
+      - hours_fact
+      - hours_limit
+      - hours_plan
+      - teacher_id
+      - teacher_name
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    UserDetail:
+      type: object
+      description: Полный сериализатор профиля пользователя.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email адрес
+          maxLength: 254
+        first_name:
+          type: string
+          title: Имя
+          maxLength: 150
+        last_name:
+          type: string
+          title: Фамилия
+          maxLength: 150
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Роль в системе
+        is_active:
+          type: boolean
+          title: Активный
+          description: Отметьте, если пользователь должен считаться активным. Уберите
+            эту отметку вместо удаления учётной записи.
+        is_head:
+          type: boolean
+          readOnly: true
+        is_teacher:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - created_at
+      - email
+      - id
+      - is_head
+      - is_teacher
+      - updated_at
+      - username
+    UserList:
+      type: object
+      description: Облегчённый сериализатор для списков пользователей.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email адрес
+          maxLength: 254
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          title: Роль в системе
+        is_active:
+          type: boolean
+          title: Активный
+          description: Отметьте, если пользователь должен считаться активным. Уберите
+            эту отметку вместо удаления учётной записи.
+      required:
+      - email
+      - id
+      - username
+    WorkloadDetail:
+      type: object
+      description: 'Полный сериализатор нагрузки: используется для создания и редактирования.
+
+        Автоматически валидирует отсутствие коллизий в расписании.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        teacher:
+          type: integer
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+        group:
+          type: integer
+          title: Учебная группа
+        group_name:
+          type: string
+          readOnly: true
+        hours_plan:
+          type: integer
+          title: Плановые часы
+        hours_fact:
+          type: integer
+          title: Фактически проведенные часы
+        semester:
+          type: string
+          title: Учебный семестр
+          description: 'Формат: ГГГГ-N, например: 2024-1 (осенний) или 2024-2 (весенний)'
+          maxLength: 20
+        room:
+          type: string
+          title: Номер аудитории
+          description: 'Например: 101, Акт. зал'
+          maxLength: 50
+        day_of_week:
+          nullable: true
+          title: День недели
+          oneOf:
+          - $ref: '#/components/schemas/DayOfWeekEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        lesson_number:
+          nullable: true
+          title: Номер пары
+          oneOf:
+          - $ref: '#/components/schemas/LessonNumberEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата обновления
+      required:
+      - created_at
+      - discipline
+      - discipline_name
+      - group
+      - group_name
+      - hours_plan
+      - id
+      - semester
+      - teacher
+      - teacher_name
+      - updated_at
+    WorkloadList:
+      type: object
+      description: Облегчённый сериализатор для вывода таблицы нагрузки.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        teacher:
+          type: integer
+          title: Преподаватель
+        teacher_name:
+          type: string
+          readOnly: true
+        discipline:
+          type: integer
+          title: Дисциплина
+        discipline_name:
+          type: string
+          readOnly: true
+        group:
+          type: integer
+          title: Учебная группа
+        group_name:
+          type: string
+          readOnly: true
+        hours_plan:
+          type: integer
+          title: Плановые часы
+        hours_fact:
+          type: integer
+          title: Фактически проведенные часы
+        semester:
+          type: string
+          title: Учебный семестр
+          description: 'Формат: ГГГГ-N, например: 2024-1 (осенний) или 2024-2 (весенний)'
+          maxLength: 20
+        room:
+          type: string
+          title: Номер аудитории
+          description: 'Например: 101, Акт. зал'
+          maxLength: 50
+        day_of_week:
+          nullable: true
+          title: День недели
+          oneOf:
+          - $ref: '#/components/schemas/DayOfWeekEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        day_name:
+          type: string
+          readOnly: true
+        lesson_number:
+          nullable: true
+          title: Номер пары
+          oneOf:
+          - $ref: '#/components/schemas/LessonNumberEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        lesson_name:
+          type: string
+          readOnly: true
+      required:
+      - day_name
+      - discipline
+      - discipline_name
+      - group
+      - group_name
+      - hours_plan
+      - id
+      - lesson_name
+      - semester
+      - teacher
+      - teacher_name
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: http://127.0.0.1:8000
