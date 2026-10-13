@@ -186,7 +186,8 @@ export function StudentSurveyPage() {
   const [cascadingData, setCascadingData] = useState({ groups: [], items: [] })
   const [assignments, setAssignments] = useState([])
 
-  // Состояние 3-шагового каскадного выбора
+  // Состояние 4-шагового выбора: Семестр -> Группа -> Дисциплина -> Преподаватель
+  const [selectedSemester, setSelectedSemester] = useState('autumn') // 'autumn' | 'spring'
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [selectedDisciplineId, setSelectedDisciplineId] = useState(null)
   const [selectedTeacherId, setSelectedTeacherId] = useState(null)
@@ -201,6 +202,16 @@ export function StudentSurveyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [submissionHash, setSubmissionHash] = useState('')
+
+  // Элементы, отфильтрованные по выбранному семестру (осенний / весенний)
+  const filteredItems = useMemo(() => {
+    return (cascadingData.items || []).filter((item) => {
+      if (selectedSemester === 'autumn') {
+        return item.semester_type === 'autumn' || item.semester === '2026-1' || item.semester?.endsWith('-1')
+      }
+      return item.semester_type === 'spring' || item.semester === '2026-2' || item.semester?.endsWith('-2')
+    })
+  }, [cascadingData.items, selectedSemester])
 
   // Загрузка списков с бэкенда
   useEffect(() => {
@@ -219,26 +230,26 @@ export function StudentSurveyPage() {
         setCascadingData(casc)
         setAssignments(assignList)
 
-        // Инициализация по умолчанию на 4-й курс (БПИ-23 или первая группа)
-        if (casc.groups && casc.groups.length > 0) {
+        // Инициализация по умолчанию: 4-й курс БПИ-23 или первая группа с осенними дисциплинами
+        const autumnItems = (casc.items || []).filter(
+          (i) => i.semester_type === 'autumn' || i.semester === '2026-1'
+        )
+        if (autumnItems.length > 0) {
           const defaultGroup =
-            casc.groups.find((g) => g.name === 'БПИ-23') || casc.groups[0]
-          setSelectedGroupId(defaultGroup.id)
+            casc.groups?.find((g) => g.name === 'БПИ-23') ||
+            casc.groups?.find((g) => g.id === autumnItems[0].group_id) ||
+            casc.groups?.[0]
 
-          // Находим первую доступную дисциплину для этой группы
-          const matchingItems = casc.items.filter(
-            (i) => i.group_id === defaultGroup.id
-          )
-          if (matchingItems.length > 0) {
-            const firstItem = matchingItems[0]
-            setSelectedDisciplineId(firstItem.discipline_id)
-            setSelectedTeacherId(firstItem.teacher_id)
-
-            // Находим назначение (assignment)
-            const foundAssign = assignList.find(
-              (a) => a.id === firstItem.assignment_id
-            )
-            setActiveAssignment(foundAssign || null)
+          if (defaultGroup) {
+            setSelectedGroupId(defaultGroup.id)
+            const matchingItems = autumnItems.filter((i) => i.group_id === defaultGroup.id)
+            if (matchingItems.length > 0) {
+              const firstItem = matchingItems[0]
+              setSelectedDisciplineId(firstItem.discipline_id)
+              setSelectedTeacherId(firstItem.teacher_id)
+              const foundAssign = assignList.find((a) => a.id === firstItem.assignment_id)
+              setActiveAssignment(foundAssign || null)
+            }
           }
         }
       } catch (err) {
@@ -252,9 +263,51 @@ export function StudentSurveyPage() {
     loadSurveyData()
   }, [])
 
-  // Опции для шага 1: Группы
+  // Опции для семестра
+  const handleSemesterChange = (newSem) => {
+    setSelectedSemester(newSem)
+    setAnswers({})
+
+    const itemsForNewSem = (cascadingData.items || []).filter((item) => {
+      if (newSem === 'autumn') {
+        return item.semester_type === 'autumn' || item.semester === '2026-1' || item.semester?.endsWith('-1')
+      }
+      return item.semester_type === 'spring' || item.semester === '2026-2' || item.semester?.endsWith('-2')
+    })
+
+    // Проверяем, есть ли текущая группа в новом семестре
+    const groupStillHasItems = itemsForNewSem.some((i) => i.group_id === selectedGroupId)
+    const nextGroupId = groupStillHasItems
+      ? selectedGroupId
+      : itemsForNewSem[0]?.group_id || null
+
+    setSelectedGroupId(nextGroupId)
+
+    if (nextGroupId) {
+      const groupItems = itemsForNewSem.filter((i) => i.group_id === nextGroupId)
+      if (groupItems.length > 0) {
+        const firstItem = groupItems[0]
+        setSelectedDisciplineId(firstItem.discipline_id)
+        setSelectedTeacherId(firstItem.teacher_id)
+        const found = assignments.find((a) => a.id === firstItem.assignment_id)
+        setActiveAssignment(found || null)
+        return
+      }
+    }
+
+    setSelectedDisciplineId(null)
+    setSelectedTeacherId(null)
+    setActiveAssignment(null)
+  }
+
+  // Опции для групп (фильтруются по наличию дисциплин в выбранном семестре)
   const groupOptions = useMemo(() => {
-    return (cascadingData.groups || []).map((g) => ({
+    const activeGroupIds = new Set(filteredItems.map((i) => i.group_id))
+    const availableGroups = (cascadingData.groups || []).filter((g) =>
+      activeGroupIds.size > 0 ? activeGroupIds.has(g.id) : true
+    )
+
+    return availableGroups.map((g) => ({
       value: g.id,
       label: (
         <span>
@@ -265,12 +318,12 @@ export function StudentSurveyPage() {
         </span>
       ),
     }))
-  }, [cascadingData.groups])
+  }, [cascadingData.groups, filteredItems])
 
-  // Опции для шага 2: Дисциплины (отфильтрованные по группе)
+  // Опции для дисциплин (отфильтрованные по семестру и группе)
   const disciplineOptions = useMemo(() => {
     if (!selectedGroupId) return []
-    const itemsForGroup = (cascadingData.items || []).filter(
+    const itemsForGroup = filteredItems.filter(
       (i) => i.group_id === selectedGroupId
     )
     const uniqueDiscs = []
@@ -285,12 +338,12 @@ export function StudentSurveyPage() {
       }
     }
     return uniqueDiscs
-  }, [cascadingData.items, selectedGroupId])
+  }, [filteredItems, selectedGroupId])
 
-  // Опции для шага 3: Преподаватели (отфильтрованные по группе и дисциплине)
+  // Опции для преподавателей (отфильтрованные по семестру, группе и дисциплине)
   const teacherOptions = useMemo(() => {
     if (!selectedGroupId || !selectedDisciplineId) return []
-    const itemsForDisc = (cascadingData.items || []).filter(
+    const itemsForDisc = filteredItems.filter(
       (i) =>
         i.group_id === selectedGroupId &&
         i.discipline_id === selectedDisciplineId
@@ -307,13 +360,13 @@ export function StudentSurveyPage() {
       ),
       assignmentId: item.assignment_id,
     }))
-  }, [cascadingData.items, selectedGroupId, selectedDisciplineId])
+  }, [filteredItems, selectedGroupId, selectedDisciplineId])
 
   // Обработчики каскадного переключения
   const handleGroupChange = (grpId) => {
     setSelectedGroupId(grpId)
     setAnswers({})
-    const itemsForGroup = (cascadingData.items || []).filter(
+    const itemsForGroup = filteredItems.filter(
       (i) => i.group_id === grpId
     )
     if (itemsForGroup.length > 0) {
@@ -332,7 +385,7 @@ export function StudentSurveyPage() {
   const handleDisciplineChange = (discId) => {
     setSelectedDisciplineId(discId)
     setAnswers({})
-    const itemsForDisc = (cascadingData.items || []).filter(
+    const itemsForDisc = filteredItems.filter(
       (i) => i.group_id === selectedGroupId && i.discipline_id === discId
     )
     if (itemsForDisc.length > 0) {
@@ -349,7 +402,7 @@ export function StudentSurveyPage() {
   const handleTeacherChange = (tchId) => {
     setSelectedTeacherId(tchId)
     setAnswers({})
-    const item = (cascadingData.items || []).find(
+    const item = filteredItems.find(
       (i) =>
         i.group_id === selectedGroupId &&
         i.discipline_id === selectedDisciplineId &&
@@ -639,7 +692,7 @@ export function StudentSurveyPage() {
     )
   }
 
-  const selectedItemInfo = (cascadingData.items || []).find(
+  const selectedItemInfo = filteredItems.find(
     (i) =>
       i.group_id === selectedGroupId &&
       i.discipline_id === selectedDisciplineId &&
@@ -696,17 +749,73 @@ export function StudentSurveyPage() {
           </div>
           <div>
             <Title level={3} style={{ margin: 0, color: '#0f172a' }}>
-              Анонимный опрос
+              Анонимный опрос студентов
             </Title>
             <Paragraph style={{ margin: '2px 0 0 0', color: '#64748b', fontSize: 13 }}>
-              Новотроицкий филиал НИТУ МИСИС &bull; Кафедра ГиСЭН
+              Новотроицкий филиал НИТУ МИСИС &bull; Академический мониторинг качества образования
             </Paragraph>
           </div>
         </div>
 
         <Divider style={{ margin: '16px 0' }} />
 
-        {/* Шаг 1-2-3: Каскадный выбор */}
+        {/* Выбор семестра (Осенний / Весенний) */}
+        <div style={{ marginBottom: 20 }}>
+          <Text strong style={{ fontSize: 14, color: '#334155', display: 'block', marginBottom: 8 }}>
+            Выберите период учебного года:
+          </Text>
+          <div
+            style={{
+              display: 'inline-flex',
+              background: '#f1f5f9',
+              borderRadius: 12,
+              padding: 4,
+              gap: 6,
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <button
+              id="semester-autumn-btn"
+              type="button"
+              onClick={() => handleSemesterChange('autumn')}
+              style={{
+                padding: '9px 20px',
+                borderRadius: 8,
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 14,
+                backgroundColor: selectedSemester === 'autumn' ? '#1a56db' : 'transparent',
+                color: selectedSemester === 'autumn' ? '#ffffff' : '#475569',
+                boxShadow: selectedSemester === 'autumn' ? '0 2px 8px rgba(26,86,219,0.25)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              🍂 Осенний семестр (1, 3, 5, 7 сем.)
+            </button>
+            <button
+              id="semester-spring-btn"
+              type="button"
+              onClick={() => handleSemesterChange('spring')}
+              style={{
+                padding: '9px 20px',
+                borderRadius: 8,
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 14,
+                backgroundColor: selectedSemester === 'spring' ? '#1a56db' : 'transparent',
+                color: selectedSemester === 'spring' ? '#ffffff' : '#475569',
+                boxShadow: selectedSemester === 'spring' ? '0 2px 8px rgba(26,86,219,0.25)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              🌸 Весенний семестр (2, 4, 6, 8 сем.)
+            </button>
+          </div>
+        </div>
+
+        {/* Каскадный выбор: Группа -> Дисциплина -> Преподаватель */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <Layers size={18} color="#1a56db" />
@@ -718,18 +827,21 @@ export function StudentSurveyPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               gap: 16,
             }}
           >
             {/* Шаг 1: Группа */}
             <div>
               <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
-                Шаг 1. Ваша учебная группа:
+                Шаг 1. Ваша учебная группа ({groupOptions.length} групп):
               </Text>
               <Select
+                id="select-group"
                 style={{ width: '100%' }}
                 size="large"
+                showSearch
+                optionFilterProp="children"
                 placeholder="Выберите группу"
                 value={selectedGroupId}
                 onChange={handleGroupChange}
@@ -740,11 +852,14 @@ export function StudentSurveyPage() {
             {/* Шаг 2: Дисциплина */}
             <div>
               <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
-                Шаг 2. Изучаемая дисциплина:
+                Шаг 2. Изучаемая дисциплина ({disciplineOptions.length}):
               </Text>
               <Select
+                id="select-discipline"
                 style={{ width: '100%' }}
                 size="large"
+                showSearch
+                optionFilterProp="children"
                 placeholder="Выберите дисциплину"
                 value={selectedDisciplineId}
                 onChange={handleDisciplineChange}
@@ -759,6 +874,7 @@ export function StudentSurveyPage() {
                 Шаг 3. Оцениваемый преподаватель:
               </Text>
               <Select
+                id="select-teacher"
                 style={{ width: '100%' }}
                 size="large"
                 placeholder="Выберите преподавателя"
@@ -793,6 +909,9 @@ export function StudentSurveyPage() {
                   {selectedItemInfo.teacher_name}
                 </Text>
                 <Tag color="blue">{selectedItemInfo.teacher_position || 'Преподаватель'}</Tag>
+                <Tag color={selectedSemester === 'autumn' ? 'orange' : 'green'}>
+                  {selectedSemester === 'autumn' ? '🍂 Осенний семестр' : '🌸 Весенний семестр'}
+                </Tag>
               </div>
               <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
                 Дисциплина: <strong>{selectedItemInfo.discipline_name}</strong> &bull; Группа:{' '}

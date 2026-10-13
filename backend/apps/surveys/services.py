@@ -35,7 +35,7 @@ DEFAULT_ADVICE_TEMPLATES = {
 }
 
 
-def calculate_branch_kpi(academic_year: str = "2024-2025", semester: str = "2024-1") -> Dict[str, Any]:
+def calculate_branch_kpi(academic_year: str = "2026-2027", semester: str = "2026-1") -> Dict[str, Any]:
     """
     Расчет верхнеуровневого KPI удовлетворенности по всему филиалу
     и в разрезе кафедр (для интерактивных кнопок на дашборде).
@@ -44,6 +44,16 @@ def calculate_branch_kpi(academic_year: str = "2024-2025", semester: str = "2024
         score__isnull=False,
         assignment__template__semester=semester,
     )
+
+    if answers_qs.count() == 0:
+        # Fallback to active template semester
+        active_tpl = SurveyTemplate.objects.filter(is_active=True).first()
+        if active_tpl:
+            semester = active_tpl.semester
+            answers_qs = SurveyAnswer.objects.filter(
+                score__isnull=False,
+                assignment__template__semester=semester,
+            )
 
     total_answers = answers_qs.count()
     branch_avg = answers_qs.aggregate(avg=Avg("score"))["avg"] or 3.92
@@ -96,12 +106,17 @@ def calculate_branch_kpi(academic_year: str = "2024-2025", semester: str = "2024
 
 def get_department_teachers_quality(
     department_id: Optional[int] = None,
-    semester: str = "2024-1"
+    semester: str = "2026-1"
 ) -> Dict[str, Any]:
     """
     Получение сводки по преподавателям кафедры:
     рейтинг удовлетворенности, количество ответов и статус.
     """
+    if not SurveyAnswer.objects.filter(assignment__template__semester=semester).exists():
+        active_tpl = SurveyTemplate.objects.filter(is_active=True).first()
+        if active_tpl:
+            semester = active_tpl.semester
+
     dept = None
     if department_id:
         dept = Department.objects.filter(id=department_id).first()
@@ -162,7 +177,7 @@ def get_department_teachers_quality(
     }
 
 
-def get_teacher_radar_analytics(teacher_id: int, semester: str = "2024-1") -> Dict[str, Any]:
+def get_teacher_radar_analytics(teacher_id: int, semester: str = "2026-1") -> Dict[str, Any]:
     """
     Расчет 5 лучей для лепестковой диаграммы (RadarChart) преподавателя,
     выборка анонимных отзывов и действующих рекомендаций.
@@ -170,6 +185,11 @@ def get_teacher_radar_analytics(teacher_id: int, semester: str = "2024-1") -> Di
     teacher = Teacher.objects.filter(id=teacher_id).select_related("department").first()
     if not teacher:
         raise ValueError(f"Преподаватель с ID={teacher_id} не найден")
+
+    if not SurveyAnswer.objects.filter(assignment__template__semester=semester).exists():
+        active_tpl = SurveyTemplate.objects.filter(is_active=True).first()
+        if active_tpl:
+            semester = active_tpl.semester
 
     # Группировка по категориям
     radar_data = []
@@ -387,14 +407,23 @@ def submit_survey_response(assignment_id: int, answers_data: List[Dict[str, Any]
     }
 
 
-def get_cascading_survey_options() -> Dict[str, Any]:
+def get_cascading_survey_options(semester: Optional[str] = None) -> Dict[str, Any]:
     """
     Возвращает структуру для зависимого (каскадного) выбора в анкете:
-    Группа -> Дисциплины группы -> Преподаватели дисциплины + assignment_id.
+    Семестр -> Группа -> Дисциплины группы -> Преподаватели дисциплины + assignment_id.
     """
     assignments = SurveyAssignment.objects.filter(is_open=True).select_related(
         "group", "discipline", "teacher", "department", "template"
     )
+
+    if semester:
+        sem_clean = str(semester).strip().lower()
+        if sem_clean in ["autumn", "fall", "осенний", "осень", "1"]:
+            assignments = assignments.filter(template__semester="2026-1")
+        elif sem_clean in ["spring", "весенний", "весна", "2"]:
+            assignments = assignments.filter(template__semester="2026-2")
+        else:
+            assignments = assignments.filter(template__semester=semester)
 
     groups_dict = {}
     cascading_items = []
@@ -408,17 +437,23 @@ def get_cascading_survey_options() -> Dict[str, Any]:
                     "course": a.group.course,
                     "direction": a.group.direction_name,
                 }
+            sem_code = a.template.semester if a.template else "2026-1"
+            sem_type = "spring" if ("-2" in sem_code or sem_code in ["2", "4", "6", "8"]) else "autumn"
             cascading_items.append({
                 "assignment_id": a.id,
                 "group_id": a.group.id,
                 "group_name": a.group.name,
+                "course": a.group.course,
+                "direction": a.group.direction_name,
                 "discipline_id": a.discipline.id,
                 "discipline_name": a.discipline.name,
                 "teacher_id": a.teacher.id,
                 "teacher_name": a.teacher.full_name,
                 "teacher_position": a.teacher.position,
                 "department_name": a.department.name if a.department else "ГиСЭН",
-                "semester": a.template.semester if a.template else "2024-1",
+                "semester": sem_code,
+                "semester_type": sem_type,
+                "semester_label": "Весенний семестр" if sem_type == "spring" else "Осенний семестр",
             })
 
     sorted_groups = sorted(

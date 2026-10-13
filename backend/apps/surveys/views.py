@@ -70,10 +70,11 @@ class SurveyAssignmentViewSet(viewsets.ReadOnlyModelViewSet):
 
         return qs
 
-    @extend_schema(summary="Каскадная структура для выбора: Группа -> Дисциплина -> Преподаватель")
+    @extend_schema(summary="Каскадная структура для выбора: Семестр -> Группа -> Дисциплина -> Преподаватель")
     @action(detail=False, methods=["get"], url_path="cascading-options")
     def cascading_options(self, request):
-        data = get_cascading_survey_options()
+        sem = request.query_params.get("semester")
+        data = get_cascading_survey_options(semester=sem)
         return Response(data, status=status.HTTP_200_OK)
 
 

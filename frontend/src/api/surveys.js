@@ -21,8 +21,8 @@ export async function getSurveyAssignments(params = {}) {
  * Получение каскадной структуры выбора для студенческой анкеты:
  * Группа -> Дисциплина -> Преподаватель
  */
-export async function getCascadingSurveyOptions() {
-  const response = await client.get('/surveys/assignments/cascading-options/')
+export async function getCascadingSurveyOptions(params = {}) {
+  const response = await client.get('/surveys/assignments/cascading-options/', { params })
   return response.data
 }
 
