@@ -325,13 +325,18 @@ class Command(BaseCommand):
             )
             questions_spring.append(q)
 
-        self.stdout.write("6. Парсинг 4 реальных файлов семестровой нагрузки Excel...")
         # Поиск файлов нагрузки
+        repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
         base_candidates = [
+            repo_root / "data" / "workload_input",
+            repo_root / "backend" / "data" / "workload_input",
+            Path("/app/data/workload_input"),
+            Path("/app/backend/data/workload_input"),
+            Path.cwd() / "data" / "workload_input",
+            Path.cwd() / "backend" / "data" / "workload_input",
+            Path("backend/data/workload_input"),
             Path("data/workload_input"),
-            Path("c:/Users/Olega/kurs_joul/data/workload_input"),
             Path("."),
-            Path("c:/Users/Olega/kurs_joul"),
         ]
 
         excel_files = []
