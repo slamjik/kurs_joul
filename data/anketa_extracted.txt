@@ -1,0 +1,803 @@
+Исходный код анкеты оценки качества преподавания
+Файл anketa.html — полный листинг
+Дата: 08.10.2026
+Исходный код anketa.html
+<!DOCTYPE html>
+ 
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Анкета оценки качества обучения в филиале ВУЗа</title>
+<style>
+:root {
+    --primary: #2563eb;
+    --success: #16a34a;
+    --warning: #ca8a04;
+    --danger:  #dc2626;
+    --bg:      #f8fafc;
+    --card:    #ffffff;
+    --text:    #0f172a;
+    --border:  #e2e8f0;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    margin: 0;
+    padding: 20px;
+}
+.container { max-width: 860px; margin: 0 auto; }
+ 
+/* ── Шапка ── */
+.header {
+    text-align: center;
+    background: var(--card);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    margin-bottom: 28px;
+}
+.header h1 { margin: 0 0 8px; font-size: 22px; }
+.header p  { margin: 0; color: #64748b; font-size: 14px; }
+ 
+/* ── Блок-карточка ── */
+.block-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    border: 1px solid var(--border);
+}
+.block-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 10px;
+}
+.block-desc {
+    font-size: 13px;
+    color: #475569;
+    font-style: italic;
+    background: #f1f5f9;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    border-left: 3px solid var(--primary);
+}
+ 
+/* ── Таблица-матрица ── */
+.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.matrix-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border);
+    text-align: center;
+    white-space: nowrap;
+}
+.matrix-table th.col-teacher { text-align: left; min-width: 180px; }
+.matrix-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+.matrix-table td.col-teacher {
+    font-size: 14px;
+    font-weight: 600;
+}
+.matrix-table td.col-teacher span {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #64748b;
+}
+.matrix-table tr.teacher-row:last-child td { border-bottom: none; }
+.matrix-table td.col-btn { text-align: center; }
+ 
+/* ── Кнопки выбора ── */
+.btn-opt {
+    display: inline-block;
+    width: 100%;
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all .18s;
+    text-align: center;
+    user-select: none;
+    white-space: nowrap;
+}
+.btn-opt:hover { background: #f1f5f9; }
+.btn-opt.active[data-val="fully"]     { background: #dcfce7; border-color: var(--success); color: #14532d; }
+.btn-opt.active[data-val="partially"] { background: #fef9c3; border-color: var(--warning); color: #713f12; }
+.btn-opt.active[data-val="not"]       { background: #fee2e2; border-color: var(--danger);  color: #7f1d1d; }
+ 
+/* ── Строка-раскрывашка с чекбоксами ── */
+.expand-row { display: none; }
+.expand-row.show { display: table-row; }
+.expand-cell {
+    padding: 0 10px 14px 10px !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+.expand-inner {
+    background: #fffbeb;
+    border: 1px dashed var(--warning);
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+.expand-inner > p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #92400e;
+}
+.checkbox-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1.4;
+}
+.checkbox-item input { margin-top: 3px; flex-shrink: 0; }
+.subgroup-label {
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #64748b;
+    margin: 10px 0 5px;
+}
+ 
+/* ── Секция открытых вопросов ── */
+.open-questions-section {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    border: 1px solid var(--border);
+}
+.open-questions-section h3 { margin-top: 0; color: var(--primary); }
+.text-area-group { margin-bottom: 20px; }
+.text-area-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+textarea {
+    width: 100%;
+    height: 100px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+textarea:focus { outline: none; border-color: var(--primary); }
+ 
+/* ── Кнопка отправки ── */
+.submit-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(37,99,235,.2);
+    transition: background .2s;
+}
+.submit-btn:hover { background: #1d4ed8; }
+ 
+/* ── Обёртка таблицы с горизонтальным скроллом ── */
+.table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.matrix-table { min-width: 520px; }
+ 
+/* ── Адаптив ── */
+@media (max-width: 700px) {
+    .btn-opt { font-size: 11px; padding: 7px 3px; }
+    .matrix-table th, .matrix-table td { padding: 7px 4px; }
+    .block-card { padding: 16px 14px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<!-- ══ ШАПКА ══ -->
+<div class="header">
+<h1>Оценка качества преподавания</h1>
+<p>Пожалуйста, оцените работу преподавателей по вашим дисциплинам в текущем семестре.<br/>
+    Опрос строго анонимный, все данные будут использованы в обобщённом виде.</p>
+</div>
+<form id="quizForm" onsubmit="event.preventDefault(); validateAndNext();">
+<!-- ══════════════════════════════════════════════════════
+     БЛОК 1. Организационно-методическое обеспечение
+══════════════════════════════════════════════════════ -->
+<div class="block-card" data-block-id="1">
+<div class="block-card-title">Блок 1. Организационно-методическое обеспечение дисциплины</div>
+<div class="block-desc">
+<strong>Стандарт:</strong> На первом занятии преподаватель должен полностью ознакомить с организацией изучения дисциплины. Сюда входит: чёткое озвучивание формы промежуточной аттестации (зачёт или экзамен) и правил её прохождения, предоставление списка вопросов к экзамену, предоставление доступа к курсу в Moodle, количество мероприятий текущего контроля и их сроки, а также выдача заданий, требований к выполнению заданий и сроков по курсовым и контрольным работам.
+    </div>
+<div class="table-wrap"><table class="matrix-table">
+<thead>
+<tr>
+<th class="col-teacher">Преподаватель / Дисциплина</th>
+<th>🟢 Сделано полностью</th>
+<th>🟡 Сделано частично</th>
+<th>🔴 Не сделано вообще</th>
+</tr>
+</thead>
+<tbody>
+<!-- Преподаватель 1 -->
+<tr class="teacher-row" data-teacher-id="t1">
+<td class="col-teacher">Иванова И.И.<span>Высшая математика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t1','b1')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t1','b1')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t1','b1')">🔴 Не сделано</div></td>
+</tr>
+<tr class="expand-row" id="expand-t1-b1">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО на первом занятии:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель не озвучил форму промежуточной аттестации (будет зачёт или экзамен).</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Не озвучил правила получения зачёта и/или форму проведения экзамена (критерии оценки).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Не предоставил список вопросов к экзамену.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Не предоставил доступ / ссылку на электронный курс в системе Moodle.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Не озвучил количество мероприятий текущего контроля и их сроки.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Не выдал своевременно задания на контрольную или курсовую работу.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Не ознакомил с требованиями к выполнению и оформлению контрольной или курсовой работы.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Не обозначил чёткие сроки, в которые должна быть сдана контрольная или курсовая работа.</label>
+</div>
+</td>
+</tr>
+<!-- Преподаватель 2 -->
+<tr class="teacher-row" data-teacher-id="t2">
+<td class="col-teacher">Петров П.П.<span>Физика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t2','b1')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t2','b1')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t2','b1')">🔴 Не сделано</div></td>
+</tr>
+<tr class="expand-row" id="expand-t2-b1">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО на первом занятии:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель не озвучил форму промежуточной аттестации (будет зачёт или экзамен).</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Не озвучил правила получения зачёта и/или форму проведения экзамена (критерии оценки).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Не предоставил список вопросов к экзамену.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Не предоставил доступ / ссылку на электронный курс в системе Moodle.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Не озвучил количество мероприятий текущего контроля и их сроки.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Не выдал своевременно задания на контрольную или курсовую работу.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Не ознакомил с требованиями к выполнению и оформлению контрольной или курсовой работы.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Не обозначил чёткие сроки, в которые должна быть сдана контрольная или курсовая работа.</label>
+</div>
+</td>
+</tr>
+<!-- Преподаватель 3 -->
+<tr class="teacher-row" data-teacher-id="t3">
+<td class="col-teacher">Сидорова С.С.<span>Информатика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t3','b1')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t3','b1')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t3','b1')">🔴 Не сделано</div></td>
+</tr>
+<tr class="expand-row" id="expand-t3-b1">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО на первом занятии:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель не озвучил форму промежуточной аттестации (будет зачёт или экзамен).</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Не озвучил правила получения зачёта и/или форму проведения экзамена (критерии оценки).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Не предоставил список вопросов к экзамену.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Не предоставил доступ / ссылку на электронный курс в системе Moodle.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Не озвучил количество мероприятий текущего контроля и их сроки.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Не выдал своевременно задания на контрольную или курсовую работу.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Не ознакомил с требованиями к выполнению и оформлению контрольной или курсовой работы.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Не обозначил чёткие сроки, в которые должна быть сдана контрольная или курсовая работа.</label>
+</div>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<!-- ══════════════════════════════════════════════════════
+     БЛОК 2. Качество проведения занятий и подача материала
+══════════════════════════════════════════════════════ -->
+<div class="block-card" data-block-id="2">
+<div class="block-card-title">Блок 2. Качество проведения занятий и подача материала</div>
+<div class="block-desc">
+<strong>Стандарт:</strong> Преподаватель проводит занятия профессионально, увлечённо и доступным языком. На лекциях материал подаётся структурированно, без монотонного зачитывания текста, с использованием наглядных примеров и разбором сложных моментов. На практических (лабораторных) занятиях преподаватель подробно объясняет логику выполнения заданий, помогает разобраться с ошибками и консультирует в процессе работы. На любых занятиях преподаватель готов отвечать на вопросы и связывает теорию с будущей профессией.
+    </div>
+<div class="table-wrap"><table class="matrix-table">
+<thead>
+<tr>
+<th class="col-teacher">Преподаватель / Дисциплина</th>
+<th>🟢 Полностью соответствует</th>
+<th>🟡 Соответствует частично</th>
+<th>🔴 Не соответствует вообще</th>
+</tr>
+</thead>
+<tbody>
+<tr class="teacher-row" data-teacher-id="t1">
+<td class="col-teacher">Иванова И.И.<span>Высшая математика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t1','b2')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t1','b2')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t1','b2')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t1-b2">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО на занятиях в течение семестра:</p>
+<div class="subgroup-label">Проблемы на ЛЕКЦИЯХ:</div>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Материал излагается слишком сложно, трудно воспринимать на слух.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Преподаватель монотонно читает лекцию с листа или слайдов, не удерживая внимание.</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Теоретический материал устарел или не содержит живых примеров из практики.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Преподаватель неохотно или неполно отвечает на вопросы по теме лекции.</label>
+<div class="subgroup-label">Проблемы на ПРАКТИКАХ / ЛАБОРАТОРНЫХ:</div>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Перед началом работы не объясняется алгоритм и логика выполнения практического задания.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> При возникновении трудностей или ошибок в работе сложно дождаться помощи или консультации преподавателя.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Задания на практиках слишком оторваны от лекций (непонятно, как делать на основе теории).</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Время занятия используется неэффективно (преподаватель часто отвлекается на посторонние дела).</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t2">
+<td class="col-teacher">Петров П.П.<span>Физика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t2','b2')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t2','b2')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t2','b2')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t2-b2">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО на занятиях в течение семестра:</p>
+<div class="subgroup-label">Проблемы на ЛЕКЦИЯХ:</div>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Материал излагается слишком сложно, трудно воспринимать на слух.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Преподаватель монотонно читает лекцию с листа или слайдов, не удерживая внимание.</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Теоретический материал устарел или не содержит живых примеров из практики.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Преподаватель неохотно или неполно отвечает на вопросы по теме лекции.</label>
+<div class="subgroup-label">Проблемы на ПРАКТИКАХ / ЛАБОРАТОРНЫХ:</div>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Перед началом работы не объясняется алгоритм и логика выполнения практического задания.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> При возникновении трудностей или ошибок в работе сложно дождаться помощи или консультации преподавателя.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Задания на практиках слишком оторваны от лекций (непонятно, как делать на основе теории).</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Время занятия используется неэффективно (преподаватель часто отвлекается на посторонние дела).</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t3">
+<td class="col-teacher">Сидорова С.С.<span>Информатика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t3','b2')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t3','b2')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t3','b2')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t3-b2">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО на занятиях в течение семестра:</p>
+<div class="subgroup-label">Проблемы на ЛЕКЦИЯХ:</div>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Материал излагается слишком сложно, трудно воспринимать на слух.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Преподаватель монотонно читает лекцию с листа или слайдов, не удерживая внимание.</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Теоретический материал устарел или не содержит живых примеров из практики.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Преподаватель неохотно или неполно отвечает на вопросы по теме лекции.</label>
+<div class="subgroup-label">Проблемы на ПРАКТИКАХ / ЛАБОРАТОРНЫХ:</div>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Перед началом работы не объясняется алгоритм и логика выполнения практического задания.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> При возникновении трудностей или ошибок в работе сложно дождаться помощи или консультации преподавателя.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Задания на практиках слишком оторваны от лекций (непонятно, как делать на основе теории).</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Время занятия используется неэффективно (преподаватель часто отвлекается на посторонние дела).</label>
+</div>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<!-- ══════════════════════════════════════════════════════
+     БЛОК 3. Выполнение учебного плана и дисциплина
+══════════════════════════════════════════════════════ -->
+<div class="block-card" data-block-id="3">
+<div class="block-card-title">Блок 3. Выполнение учебного плана и дисциплина проведения занятий</div>
+<div class="block-desc">
+<strong>Стандарт:</strong> Все занятия по дисциплине проводятся строго по расписанию и в полном объёме согласно учебному плану. Ни одна пара не отменяется без уважительной причины. В случае форс-мажора преподаватель своевременно предупреждает студентов, а пропущенные часы официально переносятся и отрабатываются. Преподаватель не допускает регулярных опозданий, не завершает занятия раньше положенного времени и эффективно использует время пары. Кроме того, преподаватель регулярно и в полном объёме проводит плановые консультации (в том числе по курсовым работам и НИР), а также обязательные консультации перед экзаменом.
+    </div>
+<div class="table-wrap"><table class="matrix-table">
+<thead>
+<tr>
+<th class="col-teacher">Преподаватель / Дисциплина</th>
+<th>🟢 Полностью соответствует</th>
+<th>🟡 Соответствует частично</th>
+<th>🔴 Не соответствует вообще</th>
+</tr>
+</thead>
+<tbody>
+<tr class="teacher-row" data-teacher-id="t1">
+<td class="col-teacher">Иванова И.И.<span>Высшая математика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t1','b3')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t1','b3')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t1','b3')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t1-b3">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, с чем вы столкнулись в семестре:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель регулярно опаздывал на занятия (на 10–15 минут и более).</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Преподаватель часто отпускал группу с занятий значительно раньше положенного времени.</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Преподаватель оставлял студентов одних во время занятия на длительное время.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Пары периодически отменялись, переносились или отрабатывались в другие дни.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Часть занятий была перенесена в дистанционный формат без предварительного согласования.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Преподаватель мог не явиться на пару, не предупредив старосту или группу заранее.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Преподаватель не проводил (или постоянно переносил) консультации по курсовым работам / НИР.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Преподаватель не провёл (или провёл формально) обязательную консультацию перед экзаменом.</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t2">
+<td class="col-teacher">Петров П.П.<span>Физика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t2','b3')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t2','b3')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t2','b3')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t2-b3">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, с чем вы столкнулись в семестре:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель регулярно опаздывал на занятия (на 10–15 минут и более).</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Преподаватель часто отпускал группу с занятий значительно раньше положенного времени.</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Преподаватель оставлял студентов одних во время занятия на длительное время.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Пары периодически отменялись, переносились или отрабатывались в другие дни.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Часть занятий была перенесена в дистанционный формат без предварительного согласования.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Преподаватель мог не явиться на пару, не предупредив старосту или группу заранее.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Преподаватель не проводил (или постоянно переносил) консультации по курсовым работам / НИР.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Преподаватель не провёл (или провёл формально) обязательную консультацию перед экзаменом.</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t3">
+<td class="col-teacher">Сидорова С.С.<span>Информатика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t3','b3')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t3','b3')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t3','b3')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t3-b3">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, с чем вы столкнулись в семестре:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель регулярно опаздывал на занятия (на 10–15 минут и более).</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Преподаватель часто отпускал группу с занятий значительно раньше положенного времени.</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Преподаватель оставлял студентов одних во время занятия на длительное время.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Пары периодически отменялись, переносились или отрабатывались в другие дни.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Часть занятий была перенесена в дистанционный формат без предварительного согласования.</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Преподаватель мог не явиться на пару, не предупредив старосту или группу заранее.</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Преподаватель не проводил (или постоянно переносил) консультации по курсовым работам / НИР.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Преподаватель не провёл (или провёл формально) обязательную консультацию перед экзаменом.</label>
+</div>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<!-- ══════════════════════════════════════════════════════
+     БЛОК 4. Атмосфера вовлечённости
+══════════════════════════════════════════════════════ -->
+<div class="block-card" data-block-id="4">
+<div class="block-card-title">Блок 4. Формирование атмосферы вовлечённости в изучение дисциплины</div>
+<div class="block-desc">
+<strong>Стандарт:</strong> Преподаватель искренне увлечён своей дисциплиной и заряжает этим интересом аудиторию. На занятиях создана комфортная, доброжелательная и безопасная для дискуссий атмосфера, где поощряется самостоятельное мышление и аргументированное выражение своего мнения. Преподаватель общается со студентами на принципах взаимного уважения и партнёрства, соблюдает культуру речи, деловой этикет и опрятный внешний вид, вдохновляя личным примером и профессионализмом.
+    </div>
+<div class="table-wrap"><table class="matrix-table">
+<thead>
+<tr>
+<th class="col-teacher">Преподаватель / Дисциплина</th>
+<th>🟢 Полностью соответствует</th>
+<th>🟡 Соответствует частично</th>
+<th>🔴 Не соответствует вообще</th>
+</tr>
+</thead>
+<tbody>
+<tr class="teacher-row" data-teacher-id="t1">
+<td class="col-teacher">Иванова И.И.<span>Высшая математика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t1','b4')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t1','b4')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t1','b4')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t1-b4">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО для создания идеальной атмосферы:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель ведёт занятия безразлично, не демонстрируя интереса к собственному предмету.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Стиль речи преподавателя монотонный, сухой или излишне академичный (занятия усыпляют).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> На занятиях присутствует психологическое напряжение, студенты боятся задавать вопросы или ошибаться.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Преподаватель болезненно воспринимает альтернативное мнение студентов или конструктивную критику.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Нарушаются принципы делового общения (преподаватель может позволить себе высокомерие, резкие или некорректные замечания).</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Преподаватель нарушает личные границы студентов (переходит на личности, обсуждает посторонние темы).</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Внешний вид или манера поведения преподавателя выглядят неопрятно или не соответствуют деловому статусу.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Преподаватель проявляет предвзятость (деление студентов на «любимчиков» и «неугодных»).</label>
+<label class="checkbox-item"><input type="checkbox" value="9"/> Преподаватель позволяет себе едкие замечания, сарказм или высмеивание ошибок студентов.</label>
+<label class="checkbox-item"><input type="checkbox" value="10"/> Преподаватель практикует публичное обсуждение неудач или личных качеств отдельных студентов перед всей аудиторией.</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t2">
+<td class="col-teacher">Петров П.П.<span>Физика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t2','b4')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t2','b4')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t2','b4')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t2-b4">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО для создания идеальной атмосферы:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель ведёт занятия безразлично, не демонстрируя интереса к собственному предмету.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Стиль речи преподавателя монотонный, сухой или излишне академичный (занятия усыпляют).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> На занятиях присутствует психологическое напряжение, студенты боятся задавать вопросы или ошибаться.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Преподаватель болезненно воспринимает альтернативное мнение студентов или конструктивную критику.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Нарушаются принципы делового общения (преподаватель может позволить себе высокомерие, резкие или некорректные замечания).</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Преподаватель нарушает личные границы студентов (переходит на личности, обсуждает посторонние темы).</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Внешний вид или манера поведения преподавателя выглядят неопрятно или не соответствуют деловому статусу.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Преподаватель проявляет предвзятость (деление студентов на «любимчиков» и «неугодных»).</label>
+<label class="checkbox-item"><input type="checkbox" value="9"/> Преподаватель позволяет себе едкие замечания, сарказм или высмеивание ошибок студентов.</label>
+<label class="checkbox-item"><input type="checkbox" value="10"/> Преподаватель практикует публичное обсуждение неудач или личных качеств отдельных студентов перед всей аудиторией.</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t3">
+<td class="col-teacher">Сидорова С.С.<span>Информатика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t3','b4')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t3','b4')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t3','b4')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t3-b4">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, чего НЕ ХВАТИЛО для создания идеальной атмосферы:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Преподаватель ведёт занятия безразлично, не демонстрируя интереса к собственному предмету.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> Стиль речи преподавателя монотонный, сухой или излишне академичный (занятия усыпляют).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> На занятиях присутствует психологическое напряжение, студенты боятся задавать вопросы или ошибаться.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Преподаватель болезненно воспринимает альтернативное мнение студентов или конструктивную критику.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Нарушаются принципы делового общения (преподаватель может позволить себе высокомерие, резкие или некорректные замечания).</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> Преподаватель нарушает личные границы студентов (переходит на личности, обсуждает посторонние темы).</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Внешний вид или манера поведения преподавателя выглядят неопрятно или не соответствуют деловому статусу.</label>
+<label class="checkbox-item"><input type="checkbox" value="8"/> Преподаватель проявляет предвзятость (деление студентов на «любимчиков» и «неугодных»).</label>
+<label class="checkbox-item"><input type="checkbox" value="9"/> Преподаватель позволяет себе едкие замечания, сарказм или высмеивание ошибок студентов.</label>
+<label class="checkbox-item"><input type="checkbox" value="10"/> Преподаватель практикует публичное обсуждение неудач или личных качеств отдельных студентов перед всей аудиторией.</label>
+</div>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<!-- ══════════════════════════════════════════════════════
+     БЛОК 5. Электронный курс в Moodle
+══════════════════════════════════════════════════════ -->
+<div class="block-card" data-block-id="5">
+<div class="block-card-title">Блок 5. Наполнение и использование электронного курса в Moodle</div>
+<div class="block-desc">
+<strong>Стандарт:</strong> Электронный курс в Moodle является полноценным цифровым сопровождением дисциплины. Его содержание чётко структурировано и интуитивно понятно (разделено на блоки: лекции, практики, задания). Курс полностью укомплектован актуальными учебными материалами, списками литературы, тестами, вопросами к экзамену и критериями оценивания. Преподаватель регулярно взаимодействует с платформой в процессе обучения: отсылает к материалам во время занятий, организует проверку заданий и поддерживает непрерывную связь.
+    </div>
+<div class="table-wrap"><table class="matrix-table">
+<thead>
+<tr>
+<th class="col-teacher">Преподаватель / Дисциплина</th>
+<th>🟢 Полностью соответствует</th>
+<th>🟡 Соответствует частично</th>
+<th>🔴 Не соответствует вообще</th>
+</tr>
+</thead>
+<tbody>
+<tr class="teacher-row" data-teacher-id="t1">
+<td class="col-teacher">Иванова И.И.<span>Высшая математика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t1','b5')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t1','b5')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t1','b5')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t1-b5">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, с чем вы столкнулись в семестре:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Курс в Moodle существует формально: преподаватель ни разу не обратился к нему за весь семестр.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> В курсе отсутствует необходимый контент (нет текстов лекций, практических заданий, тестов или списков литературы).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Материалы в курсе устарели и не соответствуют тому, что преподаватель на самом деле даёт на занятиях.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Структура курса хаотична: материалы свалены в кучу, сложно понять, где лекции, а где практические задания.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Интерфейс курса неудобен для изучения (битые ссылки, нечитаемые форматы файлов, отсутствие логики разделов).</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> В курсе отсутствуют обязательные организационные элементы (вопросы к экзамену, критерии оценивания работ).</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Обратная связь через Moodle не работает (задания загружаются, но оценки и комментарии преподавателя там не появляются).</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t2">
+<td class="col-teacher">Петров П.П.<span>Физика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t2','b5')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t2','b5')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t2','b5')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t2-b5">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, с чем вы столкнулись в семестре:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Курс в Moodle существует формально: преподаватель ни разу не обратился к нему за весь семестр.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> В курсе отсутствует необходимый контент (нет текстов лекций, практических заданий, тестов или списков литературы).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Материалы в курсе устарели и не соответствуют тому, что преподаватель на самом деле даёт на занятиях.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Структура курса хаотична: материалы свалены в кучу, сложно понять, где лекции, а где практические задания.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Интерфейс курса неудобен для изучения (битые ссылки, нечитаемые форматы файлов, отсутствие логики разделов).</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> В курсе отсутствуют обязательные организационные элементы (вопросы к экзамену, критерии оценивания работ).</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Обратная связь через Moodle не работает (задания загружаются, но оценки и комментарии преподавателя там не появляются).</label>
+</div>
+</td>
+</tr>
+<tr class="teacher-row" data-teacher-id="t3">
+<td class="col-teacher">Сидорова С.С.<span>Информатика</span></td>
+<td class="col-btn"><div class="btn-opt" data-val="fully" onclick="selectOpt(this,'t3','b5')">🟢 Полностью</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="partially" onclick="selectOpt(this,'t3','b5')">🟡 Частично</div></td>
+<td class="col-btn"><div class="btn-opt" data-val="not" onclick="selectOpt(this,'t3','b5')">🔴 Не соответствует</div></td>
+</tr>
+<tr class="expand-row" id="expand-t3-b5">
+<td class="expand-cell" colspan="4">
+<div class="expand-inner">
+<p>Отметьте галочками то, с чем вы столкнулись в семестре:</p>
+<label class="checkbox-item"><input type="checkbox" value="1"/> Курс в Moodle существует формально: преподаватель ни разу не обратился к нему за весь семестр.</label>
+<label class="checkbox-item"><input type="checkbox" value="2"/> В курсе отсутствует необходимый контент (нет текстов лекций, практических заданий, тестов или списков литературы).</label>
+<label class="checkbox-item"><input type="checkbox" value="3"/> Материалы в курсе устарели и не соответствуют тому, что преподаватель на самом деле даёт на занятиях.</label>
+<label class="checkbox-item"><input type="checkbox" value="4"/> Структура курса хаотична: материалы свалены в кучу, сложно понять, где лекции, а где практические задания.</label>
+<label class="checkbox-item"><input type="checkbox" value="5"/> Интерфейс курса неудобен для изучения (битые ссылки, нечитаемые форматы файлов, отсутствие логики разделов).</label>
+<label class="checkbox-item"><input type="checkbox" value="6"/> В курсе отсутствуют обязательные организационные элементы (вопросы к экзамену, критерии оценивания работ).</label>
+<label class="checkbox-item"><input type="checkbox" value="7"/> Обратная связь через Moodle не работает (задания загружаются, но оценки и комментарии преподавателя там не появляются).</label>
+</div>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<!-- ══ ФИНАЛЬНЫЙ БЛОК ОТКРЫТЫХ ВОПРОСОВ ══ -->
+<div class="open-questions-section" id="openQuestionsSection" style="display:none;">
+<h3>Финальные открытые вопросы</h3>
+<p style="font-size:13px; color:#64748b; margin-bottom:20px;">Вы отметили, что по некоторым дисциплинам стандарты обучения выполняются не полностью. Пожалуйста, напишите своими словами, с какими именно проблемами вы столкнулись.</p>
+<div id="dynamicTextareasContainer"></div>
+<div class="text-area-group">
+<label style="color:var(--success);">✨ Выражение благодарности (Необязательно)</label>
+<p style="font-size:12px; color:#64748b; margin-top:-4px; margin-bottom:8px;">Если вы хотите отдельно поблагодарить кого-то из преподавателей, выделить интересную методику или написать то, что не вошло в прошлые вопросы, сделайте это здесь:</p>
+<textarea id="bonusFeedback" placeholder="Ваш положительный отзыв..."></textarea>
+</div>
+</div>
+<!-- ══ КНОПКА ══ -->
+<button class="submit-btn" id="mainSubmitBtn" type="submit">Перейти к открытым вопросам →</button>
+</form>
+</div><!-- /container -->
+<script>
+// ══════════════════════════════════════════════════════════════════
+// ДАННЫЕ: список преподавателей (id → отображаемое имя)
+// При добавлении нового преподавателя — добавить сюда и в HTML
+// ══════════════════════════════════════════════════════════════════
+const TEACHERS = {
+    t1: 'Иванова И.И. (Высшая математика)',
+    t2: 'Петров П.П. (Физика)',
+    t3: 'Сидорова С.С. (Информатика)'
+};
+ 
+// Блоки (b1..b5)
+const BLOCKS = ['b1','b2','b3','b4','b5'];
+ 
+// Хранилище выборов: choices[teacherId][blockId] = 'fully'|'partially'|'not'|null
+const choices = {};
+Object.keys(TEACHERS).forEach(tid => {
+    choices[tid] = {};
+    BLOCKS.forEach(bid => choices[tid][bid] = null);
+});
+ 
+let isOpenQuestionsStage = false;
+ 
+// ── Клик по кнопке выбора ──────────────────────────────────────
+function selectOpt(btn, teacherId, blockId) {
+    const val = btn.getAttribute('data-val');
+ 
+    // Снять активный класс со всех кнопок этой строки (той же пары teacher+block)
+    const row = btn.closest('tr');
+    row.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+ 
+    // Сохранить выбор
+    choices[teacherId][blockId] = val;
+ 
+    // Управление строкой-раскрывашкой
+    const expandRow = document.getElementById(`expand-${teacherId}-${blockId}`);
+    if (val === 'partially') {
+        expandRow.classList.add('show');
+    } else {
+        expandRow.classList.remove('show');
+        expandRow.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+}
+ 
+// ── Валидация и переход к открытым вопросам ───────────────────
+function validateAndNext() {
+ 
+    if (!isOpenQuestionsStage) {
+        // ЭТАП 1: проверить, что все ячейки заполнены
+        for (const tid of Object.keys(TEACHERS)) {
+            for (const bid of BLOCKS) {
+                if (!choices[tid][bid]) {
+                    alert(`Пожалуйста, выберите оценку для преподавателя ${TEACHERS[tid]} в блоке ${bid.replace('b','Блок ')}.`);
+                    // Прокрутить к нужному блоку
+                    const blockNum = bid.replace('b','');
+                    document.querySelector(`[data-block-id="${blockNum}"]`).scrollIntoView({behavior:'smooth', block:'center'});
+                    return;
+                }
+                // Если «Частично» — обязательно хотя бы одна галочка
+                if (choices[tid][bid] === 'partially') {
+                    const expandRow = document.getElementById(`expand-${tid}-${bid}`);
+                    const checked = expandRow.querySelectorAll('input[type="checkbox"]:checked').length;
+                    if (checked === 0) {
+                        alert(`Вы выбрали «Частично» для ${TEACHERS[tid]} (${bid.replace('b','Блок ')}). Отметьте хотя бы одну галочку в раскрывшемся списке!`);
+                        expandRow.scrollIntoView({behavior:'smooth', block:'center'});
+                        return;
+                    }
+                }
+            }
+        }
+ 
+        // Определить преподавателей с хотя бы одним «Частично» или «Не сделано»
+        const problemTeachers = Object.keys(TEACHERS).filter(tid =>
+            BLOCKS.some(bid => choices[tid][bid] === 'partially' || choices[tid][bid] === 'not')
+        );
+ 
+        // Сгенерировать текстовые поля
+        const container = document.getElementById('dynamicTextareasContainer');
+        container.innerHTML = '';
+ 
+        if (problemTeachers.length > 0) {
+            problemTeachers.forEach(tid => {
+                const group = document.createElement('div');
+                group.className = 'text-area-group';
+                group.innerHTML = `
+                    <label style="color:var(--danger);">⚠️ ${TEACHERS[tid]}</label>
+                    <p style="font-size:12px;color:#64748b;margin-top:-4px;margin-bottom:8px;">
+                        Что именно вас не устраивает в организации дисциплины или подаче материала?
+                        Напишите подробно (какие темы непонятны, чего не хватает, что мешает учёбе):
+                    </p>
+                    <textarea class="required-comment" data-teacher="${TEACHERS[tid]}" placeholder="Опишите ваши замечания подробно..."></textarea>
+                `;
+                container.appendChild(group);
+            });
+        } else {
+            container.innerHTML = '<p style="font-size:14px;color:var(--success);font-weight:600;">🎉 Отлично! Вы полностью довольны организацией учебного процесса по всем предметам.</p>';
+        }
+ 
+        // Скрыть блоки, показать открытые вопросы
+        document.querySelectorAll('.block-card').forEach(c => c.style.display = 'none');
+        document.getElementById('openQuestionsSection').style.display = 'block';
+        document.getElementById('mainSubmitBtn').innerText = 'Отправить анкету в базу данных';
+        isOpenQuestionsStage = true;
+        window.scrollTo(0, 0);
+ 
+    } else {
+        // ЭТАП 2: проверить заполненность обязательных текстовых полей
+        for (const ta of document.querySelectorAll('.required-comment')) {
+            if (ta.value.trim() === '') {
+                alert(`Пожалуйста, заполните текстовое описание проблемы по дисциплине: ${ta.getAttribute('data-teacher')}`);
+                ta.focus();
+                return;
+            }
+        }
+ 
+        // Успешная отправка
+        alert('Анкета успешно сохранена! Большое спасибо за участие в оценке качества образования.');
+        // Здесь подключается Ajax/Fetch-запрос к бэкенду
+        document.getElementById('quizForm').reset();
+        location.reload();
+    }
+}
+</script>
+</body>
+</html>

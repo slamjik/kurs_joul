@@ -176,6 +176,9 @@ def get_kpi_workload_chart(semester: Optional[str] = None) -> List[Dict[str, Any
             "completion_pct": completion_pct,
         })
 
+    # Сортируем по убыванию плановой нагрузки, чтобы активные преподаватели были в начале
+    chart_data.sort(key=lambda x: x["hours_plan"], reverse=True)
+
     cache.set(cache_key, chart_data, KPI_CACHE_TTL)
     return chart_data
 

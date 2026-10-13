@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react'
 import {
   Card,
   Typography,
-  Radio,
   Checkbox,
   Input,
   Button,
@@ -13,6 +12,7 @@ import {
   Tag,
   Spin,
   Progress,
+  Alert,
 } from 'antd'
 import {
   GraduationCap,
@@ -21,9 +21,12 @@ import {
   BookOpen,
   UserCheck,
   Layers,
-  MessageSquare,
+  Calendar,
+  Sparkles,
+  AlertTriangle,
   CheckCircle2,
-  CheckSquare,
+  Heart,
+  HelpCircle,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -35,146 +38,148 @@ import {
 const { Title, Paragraph, Text } = Typography
 const { TextArea } = Input
 
-// Шкала оценивания 1-5
-const SCALE_OPTIONS = [
-  { value: 1, label: '1 — Совсем не согласен', shortLabel: '1 (Очень плохо)' },
-  { value: 2, label: '2 — Скорее не согласен', shortLabel: '2 (Слабо)' },
-  { value: 3, label: '3 — Затрудняюсь ответить', shortLabel: '3 (Средне)' },
-  { value: 4, label: '4 — Скорее согласен', shortLabel: '4 (Хорошо)' },
-  { value: 5, label: '5 — Полностью согласен', shortLabel: '5 (Отлично)' },
-]
-
-// 12 критериев опроса качества преподавания (соответствуют академическим стандартам филиала)
-const DEFAULT_QUESTIONS = [
-  // 5 критериев матрицы (шкала 1-5)
+// 5 официальных стандартов качества кафедры (Блоки 1–5)
+export const QUALITY_BLOCKS = [
   {
     id: 1,
-    category: 'clarity',
-    category_display: 'Понятность и структурированность',
-    text: 'Преподаватель понятно, логично и структурированно излагает учебный материал',
-    question_type: 'scale_5',
-    options: [],
+    order: 1,
+    title: 'Блок 1. Организационно-методическое обеспечение дисциплины',
+    shortTitle: 'Организационно-методическое обеспечение',
+    category: 'relevance',
+    icon: Layers,
+    standard:
+      'На первом занятии преподаватель должен полностью ознакомить с организацией изучения дисциплины: чётко озвучить форму промежуточной аттестации (зачёт или экзамен) и правила её прохождения, предоставить список вопросов к экзамену, ссылку на курс в Moodle, количество мероприятий текущего контроля и сроки, а также требования к оформлению и дедлайны по курсовым и контрольным работам.',
+    options: [
+      { key: 'fully', label: '🟢 Сделано полностью', score: 5, color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
+      { key: 'partially', label: '🟡 Сделано частично', score: 3, color: '#ca8a04', bg: '#fef9c3', border: '#fde047' },
+      { key: 'not', label: '🔴 Не сделано вообще', score: 1, color: '#dc2626', bg: '#fee2e2', border: '#fca5a5' },
+    ],
+    defectsTitle: 'Отметьте галочками то, чего НЕ ХВАТИЛО на первом занятии:',
+    defects: [
+      'Преподаватель не озвучил форму промежуточной аттестации (будет зачёт или экзамен).',
+      'Не озвучил правила получения зачёта и/или форму проведения экзамена (критерии оценки).',
+      'Не предоставил список вопросов к экзамену.',
+      'Не предоставил доступ / ссылку на электронный курс в системе Moodle.',
+      'Не озвучил количество мероприятий текущего контроля и их сроки.',
+      'Не выдал своевременно задания на контрольную или курсовую работу.',
+      'Не ознакомил с требованиями к выполнению и оформлению контрольной или курсовой работы.',
+      'Не обозначил чёткие сроки, в которые должна быть сдана контрольная или курсовая работа.',
+    ],
   },
   {
     id: 2,
-    category: 'relevance',
-    category_display: 'Практическая ценность',
-    text: 'Содержание курса практически ценно, полезно для будущей профессии и содержит актуальные примеры',
-    question_type: 'scale_5',
-    options: [],
+    order: 2,
+    title: 'Блок 2. Качество проведения занятий и подача материала',
+    shortTitle: 'Качество проведения занятий',
+    category: 'clarity',
+    icon: BookOpen,
+    standard:
+      'Преподаватель проводит занятия профессионально, увлечённо и доступным языком. На лекциях материал структурирован, без монотонного зачитывания с листа, с наглядными практическими примерами. На практиках (лабораторных) подробно объясняется алгоритм решения, оказывается помощь при трудностях. На любых парах преподаватель готов отвечать на вопросы и связывает теорию с профессией.',
+    options: [
+      { key: 'fully', label: '🟢 Полностью соответствует', score: 5, color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
+      { key: 'partially', label: '🟡 Соответствует частично', score: 3, color: '#ca8a04', bg: '#fef9c3', border: '#fde047' },
+      { key: 'not', label: '🔴 Не соответствует вообще', score: 1, color: '#dc2626', bg: '#fee2e2', border: '#fca5a5' },
+    ],
+    defectsTitle: 'Отметьте галочками то, чего НЕ ХВАТИЛО на занятиях в течение семестра:',
+    subgroups: [
+      {
+        title: 'Проблемы на ЛЕКЦИЯХ:',
+        items: [
+          'Материал излагается слишком сложно, трудно воспринимать на слух.',
+          'Преподаватель монотонно читает лекцию с листа или слайдов, не удерживая внимание.',
+          'Теоретический материал устарел или не содержит живых примеров из практики.',
+          'Преподаватель неохотно или неполно отвечает на вопросы по теме лекции.',
+        ],
+      },
+      {
+        title: 'Проблемы на ПРАКТИКАХ / ЛАБОРАТОРНЫХ:',
+        items: [
+          'Перед началом работы не объясняется алгоритм и логика выполнения практического задания.',
+          'При возникновении трудностей или ошибок сложно дождаться помощи или консультации преподавателя.',
+          'Задания на практиках слишком оторваны от лекций (непонятно, как делать на основе теории).',
+          'Время занятия используется неэффективно (преподаватель часто отвлекается на посторонние дела).',
+        ],
+      },
+    ],
   },
   {
     id: 3,
+    order: 3,
+    title: 'Блок 3. Выполнение учебного плана и дисциплина проведения занятий',
+    shortTitle: 'Выполнение плана и дисциплина',
     category: 'fairness',
-    category_display: 'Объективность оценивания',
-    text: 'Критерии оценивания прозрачны, баллы по БРС выставляются объективно и своевременно',
-    question_type: 'scale_5',
-    options: [],
+    icon: Calendar,
+    standard:
+      'Все занятия проводятся строго по расписанию и в полном объёме согласно учебному плану. Ни одна пара не отменяется без уважительной причины. Пропущенные часы официально переносятся и отрабатываются. Преподаватель не опаздывает, не отпускает студентов раньше времени, проводит консультации по КР/НИР и обязательную консультацию перед экзаменом.',
+    options: [
+      { key: 'fully', label: '🟢 Полностью соответствует', score: 5, color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
+      { key: 'partially', label: '🟡 Соответствует частично', score: 3, color: '#ca8a04', bg: '#fef9c3', border: '#fde047' },
+      { key: 'not', label: '🔴 Не соответствует вообще', score: 1, color: '#dc2626', bg: '#fee2e2', border: '#fca5a5' },
+    ],
+    defectsTitle: 'Отметьте галочками то, с чем вы столкнулись в семестре:',
+    defects: [
+      'Преподаватель регулярно опаздывал на занятия (на 10–15 минут и более).',
+      'Преподаватель часто отпускал группу с занятий значительно раньше положенного времени.',
+      'Преподаватель оставлял студентов одних во время занятия на длительное время.',
+      'Пары периодически отменялись, переносились или отрабатывались в другие дни.',
+      'Часть занятий была перенесена в дистанционный формат без предварительного согласования.',
+      'Преподаватель мог не явиться на пару, не предупредив старосту или группу заранее.',
+      'Преподаватель не проводил (или постоянно переносил) консультации по курсовым работам / НИР.',
+      'Преподаватель не провёл (или провёл формально) обязательную консультацию перед экзаменом.',
+    ],
   },
   {
     id: 4,
+    order: 4,
+    title: 'Блок 4. Формирование атмосферы вовлечённости в изучение дисциплины',
+    shortTitle: 'Атмосфера вовлечённости',
     category: 'ethics',
-    category_display: 'Педагогический такт',
-    text: 'Преподаватель доброжелателен, пунктуален, соблюдает этику и готов помочь на консультациях',
-    question_type: 'scale_5',
-    options: [],
+    icon: UserCheck,
+    standard:
+      'Преподаватель искренне увлечён дисциплиной и заряжает интересом аудиторию. На занятиях создана комфортная, безопасная для дискуссий атмосфера, где поощряется аргументированное выражение своего мнения. Соблюдаются нормы взаимного уважения, культура речи, деловой этикет и опрятный внешний вид преподавателя.',
+    options: [
+      { key: 'fully', label: '🟢 Полностью соответствует', score: 5, color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
+      { key: 'partially', label: '🟡 Соответствует частично', score: 3, color: '#ca8a04', bg: '#fef9c3', border: '#fde047' },
+      { key: 'not', label: '🔴 Не соответствует вообще', score: 1, color: '#dc2626', bg: '#fee2e2', border: '#fca5a5' },
+    ],
+    defectsTitle: 'Отметьте галочками то, чего НЕ ХВАТИЛО для создания идеальной атмосферы:',
+    defects: [
+      'Преподаватель ведёт занятия безразлично, не демонстрируя интереса к собственному предмету.',
+      'Стиль речи монотонный, сухой или излишне академичный (занятия усыпляют).',
+      'На занятиях присутствует психологическое напряжение, студенты боятся задавать вопросы или ошибаться.',
+      'Преподаватель болезненно воспринимает альтернативное мнение или конструктивную критику.',
+      'Нарушаются принципы делового общения (высокомерие, резкие или некорректные замечания).',
+      'Преподаватель нарушает личные границы студентов (переходит на личности, посторонние темы).',
+      'Внешний вид или манера поведения преподавателя выглядят неопрятно / не соответствуют статусу.',
+      'Преподаватель проявляет предвзятость (деление студентов на «любимчиков» и «неугодных»).',
+      'Преподаватель позволяет себе едкие замечания, сарказм или высмеивание ошибок студентов.',
+      'Преподаватель практикует публичное обсуждение неудач или личных качеств студентов.',
+    ],
   },
   {
     id: 5,
+    order: 5,
+    title: 'Блок 5. Наполнение и использование электронного курса в Moodle',
+    shortTitle: 'Электронный курс в Moodle',
     category: 'facilities',
-    category_display: 'Материальные условия и организация',
-    text: 'Условия в аудиториях комфортны, техническое и программное оснащение исправно',
-    question_type: 'scale_5',
-    options: [],
-  },
-
-  // 3 вопроса с одиночным выбором (single_choice)
-  {
-    id: 6,
-    category: 'organization',
-    category_display: 'Обратная связь',
-    text: 'Как часто преподаватель предоставляет обратную связь по выполненным работам?',
-    question_type: 'single_choice',
+    icon: Sparkles,
+    standard:
+      'Электронный курс в Moodle является полноценным цифровым сопровождением дисциплины: чётко структурирован, содержит актуальные лекции, задания, тесты, литературу, вопросы к экзамену и критерии оценивания. Преподаватель регулярно работает с платформой, проверяет онлайн-работы и даёт своевременную обратную связь.',
     options: [
-      'Каждую неделю / раз в 3 занятия',
-      'Примерно 1-2 раза в семестр',
-      'Только перед зачетом / экзаменом',
-      'Практически никогда',
+      { key: 'fully', label: '🟢 Полностью соответствует', score: 5, color: '#16a34a', bg: '#dcfce7', border: '#86efac' },
+      { key: 'partially', label: '🟡 Соответствует частично', score: 3, color: '#ca8a04', bg: '#fef9c3', border: '#fde047' },
+      { key: 'not', label: '🔴 Не соответствует вообще', score: 1, color: '#dc2626', bg: '#fee2e2', border: '#fca5a5' },
     ],
-  },
-  {
-    id: 7,
-    category: 'facilities',
-    category_display: 'Цифровая среда',
-    text: 'В какой степени в учебном процессе используются цифровые сервисы и материалы кафедры?',
-    question_type: 'single_choice',
-    options: [
-      'Постоянно (LMS Moodle, электронный конспект, базы данных)',
-      'Преимущественно на практических работах',
-      'Редко, только при необходимости',
-      'Не используются',
+    defectsTitle: 'Отметьте галочками то, с чем вы столкнулись в семестре:',
+    defects: [
+      'Курс в Moodle существует формально: преподаватель ни разу не обратился к нему за весь семестр.',
+      'В курсе отсутствует необходимый контент (нет текстов лекций, практических заданий, тестов или литературы).',
+      'Материалы в курсе устарели и не соответствуют тому, что преподаватель даёт на занятиях.',
+      'Структура курса хаотична: материалы свалены в кучу, сложно понять, где лекции, а где задания.',
+      'Интерфейс курса неудобен для изучения (битые ссылки, нечитаемые форматы, отсутствие логики разделов).',
+      'В курсе отсутствуют обязательные организационные элементы (вопросы к экзамену, критерии оценивания работ).',
+      'Обратная связь через Moodle не работает (задания загружаются, но оценки и комментарии преподавателя не появляются).',
     ],
-  },
-  {
-    id: 8,
-    category: 'clarity',
-    category_display: 'Темп обучения',
-    text: 'Оцените темп и интенсивность подачи материала преподавателем:',
-    question_type: 'single_choice',
-    options: [
-      'Оптимальный, успеваю усваивать',
-      'Слишком быстрый, трудно успевать',
-      'Слишком медленный, можно интенсивнее',
-      'Неравномерный, в конце семестра перегрузка',
-    ],
-  },
-
-  // 2 вопроса с множественным выбором (multiple_choice)
-  {
-    id: 9,
-    category: 'relevance',
-    category_display: 'Полезные форматы',
-    text: 'Какие форматы и методики на занятиях преподавателя были наиболее полезными?',
-    question_type: 'multiple_choice',
-    options: [
-      'Разбор реальных отраслевых кейсов',
-      'Практикумы на компьютерах и тренажерах',
-      'Дискуссии и разбор типичных ошибок',
-      'Индивидуальные консультации',
-      'Традиционные лекции под запись',
-    ],
-  },
-  {
-    id: 10,
-    category: 'organization',
-    category_display: 'Учебные материалы',
-    text: 'Какими учебными материалами преподавателя вы пользовались чаще всего?',
-    question_type: 'multiple_choice',
-    options: [
-      'Электронный курс в LMS Moodle',
-      'Слайды презентаций с лекций',
-      'Рекомендованная научная и профильная литература',
-      'Методические указания к лабораторным',
-      'Конспекты одногруппников',
-    ],
-  },
-
-  // 2 открытых текстовых вопроса (text)
-  {
-    id: 11,
-    category: 'clarity',
-    category_display: 'Сильные стороны курса',
-    text: 'Что вам больше всего понравилось в методике преподавания данного курса?',
-    question_type: 'text',
-    options: [],
-  },
-  {
-    id: 12,
-    category: 'general',
-    category_display: 'Рекомендации по улучшению',
-    text: 'Ваши конструктивные предложения по совершенствованию дисциплины и работы преподавателя:',
-    question_type: 'text',
-    options: [],
   },
 ]
 
@@ -186,24 +191,29 @@ export function StudentSurveyPage() {
   const [cascadingData, setCascadingData] = useState({ groups: [], items: [] })
   const [assignments, setAssignments] = useState([])
 
-  // Состояние 4-шагового выбора: Семестр -> Группа -> Дисциплина -> Преподаватель
+  // Семестр -> Группа -> Дисциплина -> Преподаватель
   const [selectedSemester, setSelectedSemester] = useState('autumn') // 'autumn' | 'spring'
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [selectedDisciplineId, setSelectedDisciplineId] = useState(null)
   const [selectedTeacherId, setSelectedTeacherId] = useState(null)
   const [activeAssignment, setActiveAssignment] = useState(null)
 
-  // Ответы студента: { [qId]: { question_id, score, text_response } }
-  const [answers, setAnswers] = useState({})
-  const [lessonFormat, setLessonFormat] = useState('offline') // Формат занятий
-  const [openComment, setOpenComment] = useState('') // Текстовый отзыв
+  // Выбранные оценки по 5 блокам: { [blockId]: 'fully' | 'partially' | 'not' }
+  const [blockChoices, setBlockChoices] = useState({})
+
+  // Выбранные дефекты по каждому блоку: { [blockId]: string[] }
+  const [blockDefects, setBlockDefects] = useState({})
+
+  // Финальные текстовые отзывы
+  const [criticismComment, setCriticismComment] = useState('')
+  const [gratitudeComment, setGratitudeComment] = useState('')
 
   // Состояние отправки
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [submissionHash, setSubmissionHash] = useState('')
 
-  // Элементы, отфильтрованные по выбранному семестру (осенний / весенний)
+  // Фильтрация элементов по выбранному семестру
   const filteredItems = useMemo(() => {
     return (cascadingData.items || []).filter((item) => {
       if (selectedSemester === 'autumn') {
@@ -230,7 +240,7 @@ export function StudentSurveyPage() {
         setCascadingData(casc)
         setAssignments(assignList)
 
-        // Инициализация по умолчанию: 4-й курс БПИ-23 или первая группа с осенними дисциплинами
+        // Инициализация по умолчанию: группа БПИ-23 или первая группа с осенними дисциплинами
         const autumnItems = (casc.items || []).filter(
           (i) => i.semester_type === 'autumn' || i.semester === '2026-1'
         )
@@ -266,7 +276,7 @@ export function StudentSurveyPage() {
   // Опции для семестра
   const handleSemesterChange = (newSem) => {
     setSelectedSemester(newSem)
-    setAnswers({})
+    resetSurveyAnswers()
 
     const itemsForNewSem = (cascadingData.items || []).filter((item) => {
       if (newSem === 'autumn') {
@@ -275,7 +285,6 @@ export function StudentSurveyPage() {
       return item.semester_type === 'spring' || item.semester === '2026-2' || item.semester?.endsWith('-2')
     })
 
-    // Проверяем, есть ли текущая группа в новом семестре
     const groupStillHasItems = itemsForNewSem.some((i) => i.group_id === selectedGroupId)
     const nextGroupId = groupStillHasItems
       ? selectedGroupId
@@ -300,7 +309,14 @@ export function StudentSurveyPage() {
     setActiveAssignment(null)
   }
 
-  // Опции для групп (фильтруются по наличию дисциплин в выбранном семестре)
+  const resetSurveyAnswers = () => {
+    setBlockChoices({})
+    setBlockDefects({})
+    setCriticismComment('')
+    setGratitudeComment('')
+  }
+
+  // Опции для групп
   const groupOptions = useMemo(() => {
     const activeGroupIds = new Set(filteredItems.map((i) => i.group_id))
     const availableGroups = (cascadingData.groups || []).filter((g) =>
@@ -320,12 +336,10 @@ export function StudentSurveyPage() {
     }))
   }, [cascadingData.groups, filteredItems])
 
-  // Опции для дисциплин (отфильтрованные по семестру и группе)
+  // Опции для дисциплин
   const disciplineOptions = useMemo(() => {
     if (!selectedGroupId) return []
-    const itemsForGroup = filteredItems.filter(
-      (i) => i.group_id === selectedGroupId
-    )
+    const itemsForGroup = filteredItems.filter((i) => i.group_id === selectedGroupId)
     const uniqueDiscs = []
     const seen = new Set()
     for (const item of itemsForGroup) {
@@ -340,13 +354,11 @@ export function StudentSurveyPage() {
     return uniqueDiscs
   }, [filteredItems, selectedGroupId])
 
-  // Опции для преподавателей (отфильтрованные по семестру, группе и дисциплине)
+  // Опции для преподавателей
   const teacherOptions = useMemo(() => {
     if (!selectedGroupId || !selectedDisciplineId) return []
     const itemsForDisc = filteredItems.filter(
-      (i) =>
-        i.group_id === selectedGroupId &&
-        i.discipline_id === selectedDisciplineId
+      (i) => i.group_id === selectedGroupId && i.discipline_id === selectedDisciplineId
     )
     return itemsForDisc.map((item) => ({
       value: item.teacher_id,
@@ -362,13 +374,11 @@ export function StudentSurveyPage() {
     }))
   }, [filteredItems, selectedGroupId, selectedDisciplineId])
 
-  // Обработчики каскадного переключения
+  // Обработчики каскадного выбора
   const handleGroupChange = (grpId) => {
     setSelectedGroupId(grpId)
-    setAnswers({})
-    const itemsForGroup = filteredItems.filter(
-      (i) => i.group_id === grpId
-    )
+    resetSurveyAnswers()
+    const itemsForGroup = filteredItems.filter((i) => i.group_id === grpId)
     if (itemsForGroup.length > 0) {
       const nextItem = itemsForGroup[0]
       setSelectedDisciplineId(nextItem.discipline_id)
@@ -384,7 +394,7 @@ export function StudentSurveyPage() {
 
   const handleDisciplineChange = (discId) => {
     setSelectedDisciplineId(discId)
-    setAnswers({})
+    resetSurveyAnswers()
     const itemsForDisc = filteredItems.filter(
       (i) => i.group_id === selectedGroupId && i.discipline_id === discId
     )
@@ -401,7 +411,7 @@ export function StudentSurveyPage() {
 
   const handleTeacherChange = (tchId) => {
     setSelectedTeacherId(tchId)
-    setAnswers({})
+    resetSurveyAnswers()
     const item = filteredItems.find(
       (i) =>
         i.group_id === selectedGroupId &&
@@ -414,187 +424,125 @@ export function StudentSurveyPage() {
     }
   }
 
-  // Вопросы анкеты: берем из назначения (activeAssignment.questions) или шаблона,
-  // а при их отсутствии — гарантированные критерии по умолчанию
-  const rawQuestions = useMemo(() => {
-    if (activeAssignment?.questions && activeAssignment.questions.length > 0) {
-      return activeAssignment.questions
+  // Выбор оценки в блоке (fully / partially / not)
+  const handleBlockSelect = (blockId, optKey) => {
+    setBlockChoices((prev) => ({
+      ...prev,
+      [blockId]: optKey,
+    }))
+
+    // Если выбрано "Полностью", очищаем отмеченные дефекты для этого блока
+    if (optKey === 'fully') {
+      setBlockDefects((prev) => ({
+        ...prev,
+        [blockId]: [],
+      }))
     }
-    if (activeAssignment?.template?.questions && activeAssignment.template.questions.length > 0) {
-      return activeAssignment.template.questions
-    }
-    return DEFAULT_QUESTIONS
-  }, [activeAssignment])
-
-  // Разделение на матричные критерии (1-5), одиночный выбор, множественный выбор и текстовые отзывы
-  const matrixQuestions = useMemo(() => {
-    const list = rawQuestions.filter(
-      (q) => q.question_type === 'scale_5' || q.question_type === 'score_5'
-    )
-    return list.length > 0 ? list : DEFAULT_QUESTIONS.slice(0, 5)
-  }, [rawQuestions])
-
-  const singleChoiceQuestions = useMemo(() => {
-    const list = rawQuestions.filter((q) => q.question_type === 'single_choice')
-    return list.length > 0 ? list : DEFAULT_QUESTIONS.slice(5, 8)
-  }, [rawQuestions])
-
-  const multipleChoiceQuestions = useMemo(() => {
-    const list = rawQuestions.filter((q) => q.question_type === 'multiple_choice')
-    return list.length > 0 ? list : DEFAULT_QUESTIONS.slice(8, 10)
-  }, [rawQuestions])
-
-  const textQuestions = useMemo(() => {
-    const list = rawQuestions.filter((q) => q.question_type === 'text')
-    return list.length > 0 ? list : DEFAULT_QUESTIONS.slice(10, 12)
-  }, [rawQuestions])
-
-  // Установка оценки в матрице
-  const handleMatrixScore = (questionId, scoreValue) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: {
-        question_id: questionId,
-        score: scoreValue,
-        text_response: '',
-      },
-    }))
   }
 
-  // Одиночный выбор
-  const handleSingleChoice = (questionId, selectedVal) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: {
-        question_id: questionId,
-        score: null,
-        text_response: selectedVal,
-      },
-    }))
+  // Переключение чекбокса дефекта
+  const handleDefectToggle = (blockId, defectText) => {
+    setBlockDefects((prev) => {
+      const currentList = prev[blockId] || []
+      const exists = currentList.includes(defectText)
+      const nextList = exists
+        ? currentList.filter((d) => d !== defectText)
+        : [...currentList, defectText]
+      return {
+        ...prev,
+        [blockId]: nextList,
+      }
+    })
   }
 
-  // Множественный выбор
-  const handleMultipleChoice = (questionId, selectedArr) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: {
-        question_id: questionId,
-        score: null,
-        selected_options: selectedArr,
-        text_response: selectedArr.join(', '),
-      },
-    }))
-  }
+  // Расчет прогресса (сколько блоков из 5 заполнено)
+  const answeredBlocksCount = QUALITY_BLOCKS.filter((b) => blockChoices[b.id]).length
+  const progressPercent = Math.round((answeredBlocksCount / QUALITY_BLOCKS.length) * 100)
 
-  // Свободный текстовый ввод
-  const handleTextAnswer = (questionId, textVal) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: {
-        question_id: questionId,
-        score: null,
-        text_response: textVal,
-      },
-    }))
-  }
-
-  // Расчет прогресса заполнения
-  const totalMatrixCount = matrixQuestions.length
-  const answeredMatrixCount = matrixQuestions.filter(
-    (q) => answers[q.id]?.score
-  ).length
-
-  const answeredSingleCount = singleChoiceQuestions.filter(
-    (q) => answers[q.id]?.text_response
-  ).length
-
-  const answeredMultipleCount = multipleChoiceQuestions.filter(
-    (q) => (answers[q.id]?.selected_options || []).length > 0
-  ).length
-
-  const answeredTextCount = textQuestions.filter(
-    (q) => answers[q.id]?.text_response?.trim()
-  ).length
-
-  const totalQuestionsCount =
-    matrixQuestions.length +
-    singleChoiceQuestions.length +
-    multipleChoiceQuestions.length +
-    textQuestions.length
-
-  const totalAnswered =
-    answeredMatrixCount +
-    answeredSingleCount +
-    answeredMultipleCount +
-    answeredTextCount
-
-  const progressPercent =
-    totalQuestionsCount > 0
-      ? Math.round((totalAnswered / totalQuestionsCount) * 100)
-      : 0
+  // Имеются ли проблемные блоки (где выбрано partially или not)
+  const hasProblemBlocks = QUALITY_BLOCKS.some(
+    (b) => blockChoices[b.id] === 'partially' || blockChoices[b.id] === 'not'
+  )
 
   // Отправка анкеты
   const handleSubmit = async () => {
     if (!activeAssignment) {
-      message.warning('Пожалуйста, выберите дисциплину и преподавателя')
+      message.warning('Пожалуйста, выберите дисциплину и преподавателя для оценивания')
       return
     }
 
-    if (answeredMatrixCount < totalMatrixCount) {
+    if (answeredBlocksCount < QUALITY_BLOCKS.length) {
       message.warning(
-        `Пожалуйста, оцените все ${totalMatrixCount} критериев в матрице (заполнено: ${answeredMatrixCount} из ${totalMatrixCount})`
+        `Пожалуйста, оцените все ${QUALITY_BLOCKS.length} блоков анкеты (заполнено: ${answeredBlocksCount} из ${QUALITY_BLOCKS.length})`
       )
       return
     }
 
+    // Если есть замечания, проверяем, чтобы в частично/не сделано блоках были указаны дефекты или подробный отзыв
+    if (hasProblemBlocks) {
+      for (const b of QUALITY_BLOCKS) {
+        if (blockChoices[b.id] === 'partially') {
+          const defects = blockDefects[b.id] || []
+          if (defects.length === 0 && !criticismComment.trim()) {
+            message.warning(
+              `В ${b.shortTitle} выбрано «Частично». Пожалуйста, отметьте галочками пункты замечаний или напишите комментарий.`
+            )
+            return
+          }
+        }
+      }
+    }
+
     setIsSubmitting(true)
     try {
+      // Сопоставляем вопросы из активного назначения с 5 блоками
+      const templateQuestions =
+        activeAssignment?.questions ||
+        activeAssignment?.template?.questions ||
+        []
+
       const payloadAnswers = []
 
-      // 1. Ответы по матрице критериев
-      for (const q of matrixQuestions) {
-        if (answers[q.id]?.score) {
+      // 1. Оценки по 5 блокам
+      QUALITY_BLOCKS.forEach((block, idx) => {
+        const choice = blockChoices[block.id]
+        const opt = block.options.find((o) => o.key === choice)
+        const score = opt ? opt.score : 5
+        const selectedDefects = blockDefects[block.id] || []
+
+        // Ищем вопрос с соответствующим order или по индексу
+        const q =
+          templateQuestions.find((tq) => tq.order === block.order) ||
+          templateQuestions[idx]
+
+        if (q) {
           payloadAnswers.push({
             question_id: q.id,
-            score: answers[q.id].score,
-            text_response: '',
+            score: score,
+            text_response: selectedDefects.length > 0 ? selectedDefects.join('; ') : '',
           })
         }
+      })
+
+      // 2. Открытые вопросы (критика и благодарность)
+      // Вопрос #6 — замечания
+      const qCrit = templateQuestions.find((tq) => tq.order === 6)
+      if (qCrit && criticismComment.trim()) {
+        payloadAnswers.push({
+          question_id: qCrit.id,
+          score: null,
+          text_response: criticismComment.trim(),
+        })
       }
 
-      // 2. Вопросы с одиночным выбором
-      for (const q of singleChoiceQuestions) {
-        if (answers[q.id]?.text_response) {
-          payloadAnswers.push({
-            question_id: q.id,
-            score: null,
-            text_response: answers[q.id].text_response,
-          })
-        }
-      }
-
-      // 3. Вопросы с множественным выбором
-      for (const q of multipleChoiceQuestions) {
-        const opts = answers[q.id]?.selected_options || []
-        if (opts.length > 0) {
-          payloadAnswers.push({
-            question_id: q.id,
-            score: null,
-            text_response: opts.join(', '),
-          })
-        }
-      }
-
-      // 4. Текстовые развернутые отзывы
-      for (const q of textQuestions) {
-        const txt = answers[q.id]?.text_response?.trim()
-        if (txt) {
-          payloadAnswers.push({
-            question_id: q.id,
-            score: null,
-            text_response: txt,
-          })
-        }
+      // Вопрос #7 — благодарность
+      const qGrat = templateQuestions.find((tq) => tq.order === 7)
+      if (qGrat && gratitudeComment.trim()) {
+        payloadAnswers.push({
+          question_id: qGrat.id,
+          score: null,
+          text_response: gratitudeComment.trim(),
+        })
       }
 
       const res = await submitSurveyResponse({
@@ -602,7 +550,7 @@ export function StudentSurveyPage() {
         answers: payloadAnswers,
       })
 
-      const hash = res.submission_hash || res.session_token || 'SHA256-ANONYMOUS'
+      const hash = res.session_token || res.submission_hash || 'SHA256-ANONYMOUS'
       setSubmissionHash(hash)
       setIsSubmitted(true)
       message.success('Анкета успешно сохранена!')
@@ -650,11 +598,11 @@ export function StudentSurveyPage() {
         >
           <Result
             status="success"
-            title="Спасибо за участие в опросе!"
+            title="Спасибо за участие в оценке качества образования!"
             subTitle={
               <div>
                 <p style={{ margin: '8px 0', fontSize: 15, color: '#334155' }}>
-                  Ваш отзыв успешно сохранен в системе мониторинга кафедры{' '}
+                  Ваш отзыв успешно и строго анонимно сохранён в системе кафедры{' '}
                   <strong>«{activeAssignment?.department_name || 'ГиСЭН'}»</strong>.
                 </p>
                 {submissionHash && (
@@ -670,13 +618,12 @@ export function StudentSurveyPage() {
                 key="next"
                 size="large"
                 onClick={() => {
-                  setAnswers({})
-                  setOpenComment('')
+                  resetSurveyAnswers()
                   setIsSubmitted(false)
                 }}
                 style={{ backgroundColor: '#1a56db', borderColor: '#1a56db' }}
               >
-                Оценить другую дисциплину
+                Оценить следующего преподавателя
               </Button>,
               <Button
                 key="dashboard"
@@ -708,7 +655,7 @@ export function StudentSurveyPage() {
         minHeight: '100vh',
       }}
     >
-      {/* Верхняя панель */}
+      {/* Кнопка «Назад» */}
       <div
         style={{
           display: 'flex',
@@ -749,10 +696,10 @@ export function StudentSurveyPage() {
           </div>
           <div>
             <Title level={3} style={{ margin: 0, color: '#0f172a' }}>
-              Анонимный опрос студентов
+              Оценка качества преподавания
             </Title>
             <Paragraph style={{ margin: '2px 0 0 0', color: '#64748b', fontSize: 13 }}>
-              Новотроицкий филиал НИТУ МИСИС &bull; Академический мониторинг качества образования
+              Опрос строго анонимный &bull; Все данные используются в обобщённом виде для мониторинга кафедры
             </Paragraph>
           </div>
         </div>
@@ -900,7 +847,6 @@ export function StudentSurveyPage() {
               alignItems: 'center',
               flexWrap: 'wrap',
               gap: 12,
-              marginBottom: 24,
             }}
           >
             <div>
@@ -920,7 +866,7 @@ export function StudentSurveyPage() {
             </div>
 
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 12, color: '#64748b' }}>Прогресс заполнения</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>Прогресс оценивания</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <Progress
                   percent={progressPercent}
@@ -929,423 +875,318 @@ export function StudentSurveyPage() {
                   strokeColor={progressPercent === 100 ? '#15803d' : '#1a56db'}
                 />
                 <Text strong style={{ fontSize: 13, color: '#1e293b' }}>
-                  {totalAnswered} / {totalQuestionsCount}
+                  {answeredBlocksCount} / {QUALITY_BLOCKS.length} блоков
                 </Text>
               </div>
             </div>
           </div>
         )}
+      </Card>
 
-        {/* ТАБЛИЦА МАТРИЧНОГО ОЦЕНИВАНИЯ (MATRIX TABLE) */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <BookOpen size={18} color="#1a56db" />
-              <Title level={4} style={{ margin: 0, color: '#1e293b' }}>
-                Таблица критериев качества преподавания
-              </Title>
-            </div>
-            <Paragraph style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: 13 }}>
-              Оцените степень вашего согласия по каждому утверждению по 5-балльной шкале
-              (от «1 — Очень плохо» до «5 — Отлично»).
-            </Paragraph>
-          </div>
+      {/* 5 КАРТОЧЕК БЛОКОВ КАЧЕСТВА */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 28 }}>
+        {QUALITY_BLOCKS.map((block) => {
+          const IconComp = block.icon
+          const currentChoice = blockChoices[block.id]
+          const isProblem = currentChoice === 'partially' || currentChoice === 'not'
+          const currentDefects = blockDefects[block.id] || []
 
-          {/* Десктоп-матрица (Desktop-first) с адаптивным скроллом */}
-          <div
-            style={{
-              overflowX: 'auto',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              backgroundColor: '#ffffff',
-            }}
-          >
-            <table
+          return (
+            <Card
+              key={block.id}
+              data-block-id={block.id}
               style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                minWidth: 680,
+                borderRadius: 14,
+                boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                border: currentChoice
+                  ? currentChoice === 'fully'
+                    ? '1.5px solid #86efac'
+                    : currentChoice === 'partially'
+                    ? '1.5px solid #fde047'
+                    : '1.5px solid #fca5a5'
+                  : '1px solid #e2e8f0',
+                transition: 'all 0.2s ease',
               }}
             >
-              <thead>
-                <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
-                  <th
+              {/* Заголовок блока */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
                     style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: '#334155',
-                      width: '45%',
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      backgroundColor: '#eff6ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#1a56db',
                     }}
                   >
-                    Критерий оценки
-                  </th>
-                  {SCALE_OPTIONS.map((scale) => (
-                    <th
-                      key={scale.value}
-                      style={{
-                        padding: '12px 8px',
-                        textAlign: 'center',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: '#334155',
-                        width: '11%',
-                      }}
-                    >
-                      <div>{scale.value}</div>
-                      <div style={{ fontSize: 10, color: '#64748b', fontWeight: 400, marginTop: 2 }}>
-                        {scale.value === 1 ? 'Очень плохо' : scale.value === 5 ? 'Отлично' : `${scale.value} б.`}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {matrixQuestions.map((q, idx) => {
-                  const currentVal = answers[q.id]?.score
-                  const isAnswered = !!currentVal
+                    <IconComp size={18} />
+                  </div>
+                  <Title level={4} style={{ margin: 0, color: '#1e293b', fontSize: 16 }}>
+                    {block.title}
+                  </Title>
+                </div>
 
-                  return (
-                    <tr
-                      key={q.id}
-                      style={{
-                        borderBottom: '1px solid #e2e8f0',
-                        backgroundColor: isAnswered ? '#fcfdfd' : '#ffffff',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                    >
-                      <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                          <span
+                {currentChoice && (
+                  <Tag
+                    color={
+                      currentChoice === 'fully'
+                        ? 'success'
+                        : currentChoice === 'partially'
+                        ? 'warning'
+                        : 'error'
+                    }
+                    style={{ fontSize: 12, padding: '2px 10px', borderRadius: 6 }}
+                  >
+                    {currentChoice === 'fully'
+                      ? '✓ Полностью'
+                      : currentChoice === 'partially'
+                      ? 'Частично'
+                      : 'Не соответствует'}
+                  </Tag>
+                )}
+              </div>
+
+              {/* Плашка стандарта качества */}
+              <div
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  color: '#475569',
+                  backgroundColor: '#f8fafc',
+                  borderLeft: '4px solid #1a56db',
+                  padding: '12px 16px',
+                  borderRadius: '0 8px 8px 0',
+                  marginBottom: 16,
+                }}
+              >
+                <strong style={{ color: '#1e293b' }}>Стандарт кафедры:</strong> {block.standard}
+              </div>
+
+              {/* Кнопки выбора (🟢 / 🟡 / 🔴) */}
+              <div>
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                  Оцените соответствие преподавателя стандарту:
+                </Text>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 12,
+                  }}
+                >
+                  {block.options.map((opt) => {
+                    const isActive = currentChoice === opt.key
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => handleBlockSelect(block.id, opt.key)}
+                        style={{
+                          padding: '12px 16px',
+                          borderRadius: 10,
+                          border: isActive ? `2px solid ${opt.color}` : '1px solid #cbd5e1',
+                          backgroundColor: isActive ? opt.bg : '#ffffff',
+                          color: isActive ? opt.color : '#334155',
+                          fontWeight: isActive ? 700 : 500,
+                          fontSize: 14,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          transition: 'all 0.18s ease',
+                          boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Раскрывашка с дефектами при выборе 🟡 Частично или 🔴 Не сделано */}
+              {isProblem && (
+                <div
+                  style={{
+                    marginTop: 18,
+                    padding: 16,
+                    backgroundColor: '#fffbeb',
+                    borderRadius: 10,
+                    border: '1px dashed #f59e0b',
+                    animation: 'fadeIn 0.25s ease',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginBottom: 12,
+                      color: '#92400e',
+                      fontWeight: 600,
+                      fontSize: 13,
+                    }}
+                  >
+                    <AlertTriangle size={16} />
+                    <span>{block.defectsTitle}</span>
+                  </div>
+
+                  {/* Если в блоке есть подгруппы (как в Блоке 2: Лекции и Практики) */}
+                  {block.subgroups ? (
+                    <div>
+                      {block.subgroups.map((sg, sgIdx) => (
+                        <div key={sgIdx} style={{ marginBottom: 14 }}>
+                          <div
                             style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: 22,
-                              height: 22,
-                              borderRadius: '50%',
-                              backgroundColor: isAnswered ? '#dcfce7' : '#f1f5f9',
-                              color: isAnswered ? '#15803d' : '#64748b',
-                              fontSize: 12,
-                              fontWeight: 600,
-                              flexShrink: 0,
-                              marginTop: 1,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: '#b45309',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                              marginBottom: 6,
                             }}
                           >
-                            {idx + 1}
-                          </span>
-                          <div>
-                            <div style={{ fontSize: 14, color: '#1e293b', fontWeight: 500 }}>
-                              {q.text}
-                            </div>
-                            {q.category_display && (
-                              <Tag color="cyan" style={{ fontSize: 11, marginTop: 4 }}>
-                                {q.category_display}
-                              </Tag>
-                            )}
+                            {sg.title}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {sg.items.map((defectText, dIdx) => (
+                              <Checkbox
+                                key={dIdx}
+                                checked={currentDefects.includes(defectText)}
+                                onChange={() => handleDefectToggle(block.id, defectText)}
+                                style={{ fontSize: 13, color: '#334155' }}
+                              >
+                                {defectText}
+                              </Checkbox>
+                            ))}
                           </div>
                         </div>
-                      </td>
-
-                      {/* Радиокнопки 1-5 на пересечениях колонок матрицы */}
-                      {SCALE_OPTIONS.map((scale) => {
-                        const isChecked = currentVal === scale.value
-
-                        return (
-                          <td
-                            key={scale.value}
-                            style={{
-                              padding: '12px 8px',
-                              textAlign: 'center',
-                              verticalAlign: 'middle',
-                              backgroundColor: isChecked ? '#eff6ff' : 'transparent',
-                              cursor: 'pointer',
-                            }}
-                            onClick={() => handleMatrixScore(q.id, scale.value)}
-                          >
-                            <Radio
-                              checked={isChecked}
-                              onChange={() => handleMatrixScore(q.id, scale.value)}
-                              style={{ margin: 0 }}
-                            />
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* РАЗДЕЛ 2: ВОПРОСЫ С ОДИНОЧНЫМ ВЫБОРОМ (КРУЖОЧКИ) */}
-        {singleChoiceQuestions.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircle2 size={18} color="#1a56db" />
-                <Title level={4} style={{ margin: 0, color: '#1e293b' }}>
-                  Организация и процесс обучения (Один вариант ответа)
-                </Title>
-              </div>
-              <Paragraph style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: 13 }}>
-                Выберите один наиболее подходящий вариант ответа для каждого вопроса:
-              </Paragraph>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {singleChoiceQuestions.map((q, idx) => {
-                const currentAnswer = answers[q.id]?.text_response || ''
-                return (
-                  <div
-                    key={q.id}
-                    style={{
-                      padding: '16px 20px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 12,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          backgroundColor: currentAnswer ? '#dcfce7' : '#e0edff',
-                          color: currentAnswer ? '#15803d' : '#1a56db',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          marginTop: 1,
-                        }}
-                      >
-                        {matrixQuestions.length + idx + 1}
-                      </span>
-                      <div>
-                        <Text strong style={{ fontSize: 14, color: '#1e293b' }}>
-                          {q.text}
-                        </Text>
-                        {q.category_display && (
-                          <Tag color="blue" style={{ fontSize: 11, marginLeft: 8 }}>
-                            {q.category_display}
-                          </Tag>
-                        )}
-                      </div>
-                    </div>
-
-                    <Radio.Group
-                      value={currentAnswer}
-                      onChange={(e) => handleSingleChoice(q.id, e.target.value)}
-                      style={{ display: 'flex', flexDirection: 'column', gap: 10, marginLeft: 34 }}
-                    >
-                      {(q.options || []).map((opt, optIdx) => (
-                        <Radio key={optIdx} value={opt} style={{ fontSize: 13, color: '#334155' }}>
-                          {opt}
-                        </Radio>
                       ))}
-                    </Radio.Group>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* РАЗДЕЛ 3: ВОПРОСЫ С МНОЖЕСТВЕННЫМ ВЫБОРОМ (ЧЕКБОКСЫ) */}
-        {multipleChoiceQuestions.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckSquare size={18} color="#1a56db" />
-                <Title level={4} style={{ margin: 0, color: '#1e293b' }}>
-                  Форматы и материалы (Несколько вариантов ответа)
-                </Title>
-              </div>
-              <Paragraph style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: 13 }}>
-                Отметьте все подходящие варианты, которые были полезны в процессе обучения:
-              </Paragraph>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {multipleChoiceQuestions.map((q, idx) => {
-                const selectedList = answers[q.id]?.selected_options || []
-                return (
-                  <div
-                    key={q.id}
-                    style={{
-                      padding: '16px 20px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 12,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          backgroundColor: selectedList.length > 0 ? '#dcfce7' : '#e0edff',
-                          color: selectedList.length > 0 ? '#15803d' : '#1a56db',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          marginTop: 1,
-                        }}
-                      >
-                        {matrixQuestions.length + singleChoiceQuestions.length + idx + 1}
-                      </span>
-                      <div>
-                        <Text strong style={{ fontSize: 14, color: '#1e293b' }}>
-                          {q.text}
-                        </Text>
-                        {q.category_display && (
-                          <Tag color="cyan" style={{ fontSize: 11, marginLeft: 8 }}>
-                            {q.category_display}
-                          </Tag>
-                        )}
-                        <span style={{ fontSize: 12, color: '#94a3b8', marginLeft: 8 }}>
-                          (выберите 1 или более вариантов)
-                        </span>
-                      </div>
                     </div>
-
-                    <Checkbox.Group
-                      value={selectedList}
-                      onChange={(vals) => handleMultipleChoice(q.id, vals)}
-                      style={{ display: 'flex', flexDirection: 'column', gap: 10, marginLeft: 34 }}
-                    >
-                      {(q.options || []).map((opt, optIdx) => (
-                        <Checkbox key={optIdx} value={opt} style={{ fontSize: 13, color: '#334155' }}>
-                          {opt}
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {block.defects.map((defectText, dIdx) => (
+                        <Checkbox
+                          key={dIdx}
+                          checked={currentDefects.includes(defectText)}
+                          onChange={() => handleDefectToggle(block.id, defectText)}
+                          style={{ fontSize: 13, color: '#334155' }}
+                        >
+                          {defectText}
                         </Checkbox>
                       ))}
-                    </Checkbox.Group>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* РАЗДЕЛ 4: РАЗВЕРНУТЫЕ ТЕКСТОВЫЕ ОТЗЫВЫ И РЕКОМЕНДАЦИИ */}
-        {textQuestions.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <MessageSquare size={18} color="#1a56db" />
-                <Title level={4} style={{ margin: 0, color: '#1e293b' }}>
-                  Развернутые отзывы и пожелания преподавателю
-                </Title>
-              </div>
-              <Paragraph style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: 13 }}>
-                Поделитесь своим мнением, чтобы помочь преподавателю и кафедре повысить качество занятий:
-              </Paragraph>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {textQuestions.map((q, idx) => {
-                const txt = answers[q.id]?.text_response || ''
-                return (
-                  <div
-                    key={q.id}
-                    style={{
-                      padding: '16px 20px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 12,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          backgroundColor: txt.trim() ? '#dcfce7' : '#f1f5f9',
-                          color: txt.trim() ? '#15803d' : '#64748b',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          marginTop: 1,
-                        }}
-                      >
-                        {matrixQuestions.length + singleChoiceQuestions.length + multipleChoiceQuestions.length + idx + 1}
-                      </span>
-                      <div>
-                        <Text strong style={{ fontSize: 14, color: '#1e293b' }}>
-                          {q.text}
-                        </Text>
-                        {q.category_display && (
-                          <Tag color="purple" style={{ fontSize: 11, marginLeft: 8 }}>
-                            {q.category_display}
-                          </Tag>
-                        )}
-                      </div>
                     </div>
+                  )}
 
-                    <TextArea
-                      rows={3}
-                      placeholder="Напишите развернутый комментарий..."
-                      value={txt}
-                      onChange={(e) => handleTextAnswer(q.id, e.target.value)}
-                      maxLength={1000}
-                      showCount
-                      style={{ marginLeft: 34, width: 'calc(100% - 34px)' }}
-                    />
-                  </div>
-                )
-              })}
+                  {currentDefects.length > 0 && (
+                    <div style={{ marginTop: 10, fontSize: 12, color: '#b45309' }}>
+                      Отмечено замечаний: <strong>{currentDefects.length}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          )
+        })}
+      </div>
+
+      {/* СЕКЦИЯ ОТКРЫТЫХ ВОПРОСОВ */}
+      <Card
+        style={{
+          borderRadius: 16,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.05)',
+          marginBottom: 28,
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        <Title level={4} style={{ margin: '0 0 16px 0', color: '#1e293b' }}>
+          Финальные комментарии и предложения
+        </Title>
+
+        {/* Если есть хотя бы одна желтая или красная оценка — поле замечаний */}
+        {hasProblemBlocks ? (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <AlertTriangle size={16} color="#dc2626" />
+              <Text strong style={{ color: '#dc2626', fontSize: 14 }}>
+                Что именно вас не устраивает в организации дисциплины или подаче материала?
+              </Text>
             </div>
+            <Paragraph style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: 12 }}>
+              Вы отметили, что по некоторым стандартам есть отклонения. Пожалуйста, напишите подробно,
+              какие темы непонятны, чего не хватает на парах или что мешает учебному процессу:
+            </Paragraph>
+            <TextArea
+              rows={3}
+              placeholder="Опишите ваши замечания и конкретные трудности..."
+              value={criticismComment}
+              onChange={(e) => setCriticismComment(e.target.value)}
+              style={{ borderRadius: 8 }}
+            />
           </div>
+        ) : (
+          answeredBlocksCount === QUALITY_BLOCKS.length && (
+            <Alert
+              type="success"
+              showIcon
+              message="🎉 Отлично! Вы полностью довольны организацией учебного процесса по всем 5 стандартам."
+              style={{ marginBottom: 20, borderRadius: 8 }}
+            />
+          )
         )}
 
-        {/* Панель отправки */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: 12,
-            paddingTop: 16,
-            borderTop: '1px solid #f1f5f9',
-          }}
-        >
-          <Button size="large" onClick={() => navigate(-1)}>
-            Отмена
-          </Button>
-          <Button
-            type="primary"
-            size="large"
-            icon={<Send size={16} />}
-            loading={isSubmitting}
-            onClick={handleSubmit}
-            disabled={answeredMatrixCount < totalMatrixCount}
-            style={{
-              backgroundColor:
-                answeredMatrixCount === totalMatrixCount ? '#1a56db' : '#94a3b8',
-              borderColor:
-                answeredMatrixCount === totalMatrixCount ? '#1a56db' : '#94a3b8',
-              fontWeight: 600,
-              padding: '0 28px',
-            }}
-          >
-            Отправить анкету ({totalAnswered} / {totalQuestionsCount})
-          </Button>
+        {/* Поле благодарности (необязательно) */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <Heart size={16} color="#16a34a" />
+            <Text strong style={{ color: '#16a34a', fontSize: 14 }}>
+              ✨ Выражение благодарности (Необязательно)
+            </Text>
+          </div>
+          <Paragraph style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: 12 }}>
+            Если вы хотите поблагодарить преподавателя, выделить интересную методику или написать то,
+            что не вошло в вопросы, сделайте это здесь:
+          </Paragraph>
+          <TextArea
+            rows={2}
+            placeholder="Ваш положительный отзыв или добрые слова преподавателю..."
+            value={gratitudeComment}
+            onChange={(e) => setGratitudeComment(e.target.value)}
+            style={{ borderRadius: 8 }}
+          />
         </div>
       </Card>
+
+      {/* КНОПКА ОТПРАВКИ */}
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <Button
+          type="primary"
+          size="large"
+          icon={<Send size={18} />}
+          loading={isSubmitting}
+          onClick={handleSubmit}
+          disabled={!activeAssignment}
+          style={{
+            height: 52,
+            paddingLeft: 36,
+            paddingRight: 36,
+            fontSize: 16,
+            fontWeight: 600,
+            borderRadius: 12,
+            backgroundColor: '#1a56db',
+            boxShadow: '0 4px 14px rgba(26,86,219,0.3)',
+          }}
+        >
+          {answeredBlocksCount === QUALITY_BLOCKS.length
+            ? 'Отправить анкету в базу данных'
+            : `Оцените все блоки (${answeredBlocksCount} из ${QUALITY_BLOCKS.length})`}
+        </Button>
+      </div>
     </div>
   )
 }
