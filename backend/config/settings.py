@@ -187,8 +187,9 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/minute",
-        "user": "500/minute",
+        "anon": "300/minute",
+        "user": "600/minute",
+        "survey": "300/minute",
     },
 }
 
@@ -224,8 +225,8 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
-# ─── CORS Settings (Strict Origin Whitelist) ──────────────────────────────────
-CORS_ALLOW_ALL_ORIGINS = False
+# ─── CORS Settings ────────────────────────────────────────────────────────────
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(

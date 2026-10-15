@@ -127,7 +127,7 @@ class TestSurveyModelsAndServices:
 
     def test_calculate_branch_kpi(self):
         dept1 = DepartmentFactory(code="ГиСЭН")
-        dept2 = DepartmentFactory(code="ЭКН")
+        dept2 = DepartmentFactory(code="МиЕ")
         teacher = TeacherFactory(department=dept1)
         disc = DisciplineFactory()
         group = StudyGroupFactory()

@@ -41,27 +41,53 @@
   line-height: 1.4;
 }
 
-.demoBox {
-  margin-top: 20px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: var(--radius-sm);
-  border: 1px dashed var(--color-border);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+.studentBanner {
+  margin-top: 22px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: var(--radius-md);
+  text-align: center;
 }
 
-.demoTitle {
-  font-weight: 600;
-  color: var(--color-text);
+.studentBannerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-bottom: 6px;
 }
 
-.demoButtons {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
+.studentBannerTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.studentBannerText {
+  font-size: 13px;
+  color: #166534;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.studentSurveyBtn {
+  background-color: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25) !important;
+  transition: all 0.2s ease !important;
+}
+
+.studentSurveyBtn:hover {
+  background-color: #15803d !important;
+  border-color: #15803d !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.35) !important;
 }
 
 .footer {

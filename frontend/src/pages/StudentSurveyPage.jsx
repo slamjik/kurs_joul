@@ -254,7 +254,10 @@ export function StudentSurveyPage() {
             setSelectedGroupId(defaultGroup.id)
             const matchingItems = autumnItems.filter((i) => i.group_id === defaultGroup.id)
             if (matchingItems.length > 0) {
-              const firstItem = matchingItems[0]
+              const izmaylovaItem = matchingItems.find(
+                (i) => i.teacher_name && i.teacher_name.includes('Измайлова')
+              )
+              const firstItem = izmaylovaItem || matchingItems[0]
               setSelectedDisciplineId(firstItem.discipline_id)
               setSelectedTeacherId(firstItem.teacher_id)
               const foundAssign = assignList.find((a) => a.id === firstItem.assignment_id)
@@ -295,7 +298,10 @@ export function StudentSurveyPage() {
     if (nextGroupId) {
       const groupItems = itemsForNewSem.filter((i) => i.group_id === nextGroupId)
       if (groupItems.length > 0) {
-        const firstItem = groupItems[0]
+        const izmaylovaItem = groupItems.find(
+          (i) => i.teacher_name && i.teacher_name.includes('Измайлова')
+        )
+        const firstItem = izmaylovaItem || groupItems[0]
         setSelectedDisciplineId(firstItem.discipline_id)
         setSelectedTeacherId(firstItem.teacher_id)
         const found = assignments.find((a) => a.id === firstItem.assignment_id)
@@ -380,7 +386,10 @@ export function StudentSurveyPage() {
     resetSurveyAnswers()
     const itemsForGroup = filteredItems.filter((i) => i.group_id === grpId)
     if (itemsForGroup.length > 0) {
-      const nextItem = itemsForGroup[0]
+      const izmaylovaItem = itemsForGroup.find(
+        (i) => i.teacher_name && i.teacher_name.includes('Измайлова')
+      )
+      const nextItem = izmaylovaItem || itemsForGroup[0]
       setSelectedDisciplineId(nextItem.discipline_id)
       setSelectedTeacherId(nextItem.teacher_id)
       const found = assignments.find((a) => a.id === nextItem.assignment_id)
@@ -651,7 +660,7 @@ export function StudentSurveyPage() {
       style={{
         maxWidth: 960,
         margin: '20px auto 60px auto',
-        padding: '0 20px',
+        padding: '0 16px',
         minHeight: '100vh',
       }}
     >
@@ -713,12 +722,14 @@ export function StudentSurveyPage() {
           </Text>
           <div
             style={{
-              display: 'inline-flex',
+              display: 'flex',
+              flexWrap: 'wrap',
               background: '#f1f5f9',
               borderRadius: 12,
               padding: 4,
               gap: 6,
               border: '1px solid #e2e8f0',
+              maxWidth: '100%',
             }}
           >
             <button
@@ -726,7 +737,8 @@ export function StudentSurveyPage() {
               type="button"
               onClick={() => handleSemesterChange('autumn')}
               style={{
-                padding: '9px 20px',
+                flex: '1 1 180px',
+                padding: '9px 16px',
                 borderRadius: 8,
                 border: 'none',
                 cursor: 'pointer',
@@ -736,6 +748,7 @@ export function StudentSurveyPage() {
                 color: selectedSemester === 'autumn' ? '#ffffff' : '#475569',
                 boxShadow: selectedSemester === 'autumn' ? '0 2px 8px rgba(26,86,219,0.25)' : 'none',
                 transition: 'all 0.2s ease',
+                textAlign: 'center',
               }}
             >
               🍂 Осенний семестр (1, 3, 5, 7 сем.)
@@ -745,7 +758,8 @@ export function StudentSurveyPage() {
               type="button"
               onClick={() => handleSemesterChange('spring')}
               style={{
-                padding: '9px 20px',
+                flex: '1 1 180px',
+                padding: '9px 16px',
                 borderRadius: 8,
                 border: 'none',
                 cursor: 'pointer',
@@ -755,6 +769,7 @@ export function StudentSurveyPage() {
                 color: selectedSemester === 'spring' ? '#ffffff' : '#475569',
                 boxShadow: selectedSemester === 'spring' ? '0 2px 8px rgba(26,86,219,0.25)' : 'none',
                 transition: 'all 0.2s ease',
+                textAlign: 'center',
               }}
             >
               🌸 Весенний семестр (2, 4, 6, 8 сем.)
@@ -974,8 +989,8 @@ export function StudentSurveyPage() {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 12,
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                    gap: 10,
                   }}
                 >
                   {block.options.map((opt) => {

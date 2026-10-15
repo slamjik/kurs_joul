@@ -44,11 +44,6 @@ export function LoginPage() {
     }
   }
 
-  const fillDemo = (username, password) => {
-    form.setFieldsValue({ username, password })
-    setErrorMsg(null)
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -58,10 +53,37 @@ export function LoginPage() {
             <span>КафИС</span>
           </div>
           <p className={styles.subtitle}>
-            Информационная система кафедры ГиСЭН
+            Информационная система филиала
             <br />
             НФ НИТУ МИСИС
           </p>
+        </div>
+
+        {/* Прямой переход к опросу для студентов */}
+        <div className={styles.studentBanner}>
+          <div className={styles.studentBannerHeader}>
+            <GraduationCap size={20} color="#15803d" />
+            <span className={styles.studentBannerTitle}>Опрос для студентов</span>
+          </div>
+          <div className={styles.studentBannerText}>
+            Для прохождения анонимного опроса по качеству преподавания авторизация не требуется.
+          </div>
+          <Button
+            type="primary"
+            block
+            size="large"
+            id="login-survey-direct-btn"
+            className={styles.studentSurveyBtn}
+            onClick={() => navigate('/survey')}
+          >
+            Пройти опрос качества преподавания →
+          </Button>
+        </div>
+
+        <div style={{ margin: '20px 0', borderTop: '1px solid #e2e8f0', position: 'relative', textAlign: 'center' }}>
+          <span style={{ position: 'relative', top: -11, background: 'var(--color-surface)', padding: '0 12px', fontSize: 12, color: '#94a3b8' }}>
+            или вход для сотрудников
+          </span>
         </div>
 
         {errorMsg && (
@@ -116,40 +138,6 @@ export function LoginPage() {
             Войти в систему
           </Button>
         </Form>
-
-        <div className={styles.demoBox}>
-          <div className={styles.demoTitle}>Демонстрационные учетные записи:</div>
-          <div className={styles.demoButtons}>
-            <Button
-              size="small"
-              onClick={() => fillDemo('head', 'head12345')}
-            >
-              Зав. кафедрой (head)
-            </Button>
-            <Button
-              size="small"
-              onClick={() => fillDemo('teacher1', 'teacher12345')}
-            >
-              Преподаватель (teacher1)
-            </Button>
-            <Button
-              size="small"
-              onClick={() => fillDemo('admin', 'admin12345')}
-            >
-              Администратор (admin)
-            </Button>
-          </div>
-        </div>
-
-        <Button
-          type="dashed"
-          block
-          icon={<GraduationCap size={16} />}
-          onClick={() => navigate('/survey')}
-          style={{ marginTop: 14, borderColor: '#86efac', color: '#15803d', fontWeight: 500 }}
-        >
-          Пройти опрос качества как студент &rarr;
-        </Button>
 
         <div className={styles.footer}>
           &copy; 2026 НФ НИТУ МИСИС &bull; Все права защищены

@@ -72,16 +72,22 @@ def calculate_branch_kpi(academic_year: str = "2026-2027", semester: str = "2026
             avg_score = dept_answers.aggregate(avg=Avg("score"))["avg"] or 3.9
             rate = round(((float(avg_score) - 1.0) / 4.0) * 100.0, 1)
         else:
-            # Значения по умолчанию для демонстрации среза филиала
+            # Значения по умолчанию для демонстрации среза филиала (4 официальные кафедры)
             if dept.code == "ГиСЭН":
-                rate = 75.8
+                rate = 78.4
                 count = 142
-            elif dept.code == "ЭКН":
-                rate = 74.0
-                count = 98
+            elif dept.code == "МиЕ":
+                rate = 74.2
+                count = 126
+            elif dept.code == "МТиО":
+                rate = 72.8
+                count = 118
+            elif dept.code == "ЭиЭ":
+                rate = 76.5
+                count = 94
             else:
-                rate = 71.2
-                count = 110
+                rate = 74.0
+                count = 100
 
         teachers_count = Teacher.objects.filter(department=dept).count()
         departments_summary.append({
@@ -450,7 +456,16 @@ def get_cascading_survey_options(semester: Optional[str] = None) -> Dict[str, An
                 "teacher_id": a.teacher.id,
                 "teacher_name": a.teacher.full_name,
                 "teacher_position": a.teacher.position,
-                "department_name": a.department.name if a.department else "ГиСЭН",
+                "department_name": (
+                    a.department.name
+                    if a.department
+                    else (a.teacher.department.name if a.teacher and a.teacher.department else "Кафедра ГиСЭН")
+                ),
+                "department_code": (
+                    a.department.code
+                    if a.department
+                    else (a.teacher.department.code if a.teacher and a.teacher.department else "ГиСЭН")
+                ),
                 "semester": sem_code,
                 "semester_type": sem_type,
                 "semester_label": "Весенний семестр" if sem_type == "spring" else "Осенний семестр",
