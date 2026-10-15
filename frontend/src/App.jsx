@@ -75,6 +75,32 @@ export function App() {
     initFromStorage()
   }, [initFromStorage])
 
+  // Распознавание отдельного поддомена для студенческого опроса (например, survey.misis.ru или survey.localhost)
+  const hostname = (typeof window !== 'undefined' ? window.location.hostname : '').toLowerCase()
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const isSurveySubdomain =
+    hostname.startsWith('survey.') ||
+    hostname.startsWith('opros.') ||
+    searchParams?.get('subdomain') === 'survey' ||
+    searchParams?.get('mode') === 'survey'
+
+  if (isSurveySubdomain) {
+    return (
+      <ConfigProvider locale={ruRU} theme={antdTheme}>
+        <QueryClientProvider client={queryClient}>
+          <AntdApp>
+            <BrowserRouter>
+              <Routes>
+                {/* На выделенном поддомене опроса любой маршрут ведёт строго на анкету */}
+                <Route path="*" element={<StudentSurveyPage isStandaloneSubdomain={true} />} />
+              </Routes>
+            </BrowserRouter>
+          </AntdApp>
+        </QueryClientProvider>
+      </ConfigProvider>
+    )
+  }
+
   return (
     <ConfigProvider locale={ruRU} theme={antdTheme}>
       <QueryClientProvider client={queryClient}>
@@ -83,7 +109,7 @@ export function App() {
             <Routes>
               {/* Публичные маршруты */}
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/survey" element={<StudentSurveyPage />} />
+              <Route path="/survey" element={<StudentSurveyPage isStandaloneSubdomain={false} />} />
 
               {/* Защищенные маршруты */}
               <Route element={<ProtectedRoute />}>

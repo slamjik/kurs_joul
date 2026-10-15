@@ -208,9 +208,10 @@ export function StudentSurveyPage() {
   const [criticismComment, setCriticismComment] = useState('')
   const [gratitudeComment, setGratitudeComment] = useState('')
 
-  // Состояние отправки
+  // Состояние отправки и завершения
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isCompleted, setIsCompleted] = useState(false)
   const [submissionHash, setSubmissionHash] = useState('')
 
   // Фильтрация элементов по выбранному семестру
@@ -635,14 +636,52 @@ export function StudentSurveyPage() {
                 Оценить следующего преподавателя
               </Button>,
               <Button
-                key="dashboard"
+                key="finish"
                 size="large"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => setIsCompleted(true)}
               >
-                Вернуться на главную
+                Завершить опрос
               </Button>,
             ]}
           />
+        </Card>
+      </div>
+    )
+  }
+
+  // Экран окончательного завершения опроса
+  if (isCompleted) {
+    return (
+      <div style={{ maxWidth: 680, margin: '80px auto', padding: '0 20px' }}>
+        <Card
+          style={{
+            borderRadius: 16,
+            textAlign: 'center',
+            padding: '36px 24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <CheckCircle2 size={56} color="#16a34a" style={{ margin: '0 auto 16px auto', display: 'block' }} />
+          <Title level={3} style={{ color: '#0f172a', marginBottom: 8 }}>
+            Опрос успешно завершён!
+          </Title>
+          <Paragraph style={{ color: '#475569', fontSize: 15, lineHeight: 1.6, maxWidth: 520, margin: '0 auto 24px auto' }}>
+            Благодарим вас за участие в мониторинге качества образовательного процесса НФ НИТУ МИСИС.
+            Ваши оценки строго анонимны и помогут сделать преподавание лучше!
+          </Paragraph>
+          <Button
+            type="primary"
+            size="large"
+            onClick={() => {
+              resetSurveyAnswers()
+              setIsSubmitted(false)
+              setIsCompleted(false)
+            }}
+            style={{ backgroundColor: '#1a56db', borderColor: '#1a56db' }}
+          >
+            Оценить другого преподавателя
+          </Button>
         </Card>
       </div>
     )
@@ -659,23 +698,30 @@ export function StudentSurveyPage() {
     <div
       style={{
         maxWidth: 960,
-        margin: '20px auto 60px auto',
-        padding: '0 16px',
+        margin: '16px auto',
+        padding: '0 16px 140px 16px',
         minHeight: '100vh',
+        boxSizing: 'border-box',
       }}
     >
-      {/* Кнопка «Назад» */}
+      {/* Шапка портала студенческого опроса */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: 16,
+          flexWrap: 'wrap',
+          gap: 8,
         }}
       >
-        <Button icon={<ArrowLeft size={16} />} onClick={() => navigate(-1)}>
-          Вернуться
-        </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1a56db', fontWeight: 600, fontSize: 14 }}>
+          <GraduationCap size={20} />
+          <span>НФ НИТУ МИСИС &bull; Студенческий опрос качества</span>
+        </div>
+        <Tag color="green" style={{ borderRadius: 6, padding: '2px 8px' }}>
+          🔒 Анонимная анкета
+        </Tag>
       </div>
 
       {/* Заглавная карточка опроса */}
@@ -751,7 +797,7 @@ export function StudentSurveyPage() {
                 textAlign: 'center',
               }}
             >
-              🍂 Осенний семестр (1, 3, 5, 7 сем.)
+              🍂 Осенний семестр
             </button>
             <button
               id="semester-spring-btn"
@@ -772,7 +818,7 @@ export function StudentSurveyPage() {
                 textAlign: 'center',
               }}
             >
-              🌸 Весенний семестр (2, 4, 6, 8 сем.)
+              🌸 Весенний семестр
             </button>
           </div>
         </div>
@@ -1177,30 +1223,71 @@ export function StudentSurveyPage() {
         </div>
       </Card>
 
-      {/* КНОПКА ОТПРАВКИ */}
-      <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <Button
-          type="primary"
-          size="large"
-          icon={<Send size={18} />}
-          loading={isSubmitting}
-          onClick={handleSubmit}
-          disabled={!activeAssignment}
+      {/* ПЛАВАЮЩАЯ ПАНЕЛЬ ОТПРАВКИ (всегда видна внизу окна в любом режиме Chrome) */}
+      <div
+        id="survey-sticky-submit-bar"
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid #e2e8f0',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
+          padding: '12px 16px',
+          zIndex: 1000,
+        }}
+      >
+        <div
           style={{
-            height: 52,
-            paddingLeft: 36,
-            paddingRight: 36,
-            fontSize: 16,
-            fontWeight: 600,
-            borderRadius: 12,
-            backgroundColor: '#1a56db',
-            boxShadow: '0 4px 14px rgba(26,86,219,0.3)',
+            maxWidth: 960,
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
           }}
         >
-          {answeredBlocksCount === QUALITY_BLOCKS.length
-            ? 'Отправить анкету в базу данных'
-            : `Оцените все блоки (${answeredBlocksCount} из ${QUALITY_BLOCKS.length})`}
-        </Button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Progress
+              percent={progressPercent}
+              size="small"
+              style={{ width: 110 }}
+              strokeColor={progressPercent === 100 ? '#15803d' : '#1a56db'}
+            />
+            <Text strong style={{ fontSize: 13, color: '#334155' }}>
+              {answeredBlocksCount === QUALITY_BLOCKS.length
+                ? '✅ Все стандарты оценено'
+                : `Оценено ${answeredBlocksCount} из ${QUALITY_BLOCKS.length} блоков`}
+            </Text>
+          </div>
+
+          <Button
+            type="primary"
+            size="large"
+            id="survey-submit-button"
+            icon={<Send size={18} />}
+            loading={isSubmitting}
+            onClick={handleSubmit}
+            disabled={!activeAssignment}
+            style={{
+              height: 44,
+              paddingLeft: 24,
+              paddingRight: 24,
+              fontSize: 15,
+              fontWeight: 600,
+              borderRadius: 10,
+              backgroundColor: '#1a56db',
+              boxShadow: '0 2px 10px rgba(26,86,219,0.3)',
+            }}
+          >
+            {answeredBlocksCount === QUALITY_BLOCKS.length
+              ? 'Отправить анкету'
+              : `Оцените блоки (${answeredBlocksCount}/${QUALITY_BLOCKS.length})`}
+          </Button>
+        </div>
       </div>
     </div>
   )
